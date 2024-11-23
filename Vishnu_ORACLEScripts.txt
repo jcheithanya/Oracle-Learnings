@@ -1,0 +1,3895 @@
+19 C How to connect PDB 
+
+racle@tstr600764:/u/users/oracle [ukalgd1] $ sqlplus / as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Tue Jul 20 16:37:29 2021
+Version 19.7.0.0.0
+
+Copyright (c) 1982, 2020, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.7.0.0.0
+
+SYS@ukalgd1> show con_name
+
+CON_NAME
+------------------------------
+CDB$ROOT
+SYS@ukalgd1> select name,open_mode from v$containers;
+
+NAME                 OPEN_MODE
+-------------------- ----------
+CDB$ROOT             READ WRITE
+PDB$SEED             READ ONLY
+UKALGDPDBP1          READ WRITE
+
+SYS@ukalgd1> alter session set container=UKALGDPDBP1;
+
+Session altered.
+
+SYS@ukalgd1> select username from dba_users where oracle_maintained<>'Y';
+
+USERNAME
+--------------------------------------------------------------------------------------------------------------------------------
+PDBADMIN
+CDB_GOP_TEST
+DBAASUSER
+AAM
+DAS
+REP
+
+6 rows selected.
+
+SYS@ukalgd1>
+
+
+
+
+Adding tablespace for USERS in PCI DB
+
+
+
+v0b01g1@m-c02d2blzmd6n ~ % ssh  v0b01g1@dfw-us-vpr2-r56.prod.walmart.com@pcigw-balabit-dfw.walmart.com
+!! You are being recorded by PCI Gateway Solution !!
+!! For Gateway Authentication please input your AD account as Username !!
+!! Gateway Password is PCI PIN + 6 Digit Token Code for RSA Hard Tokens, Users with Soft Tokens for PCI VPN - please provide the 8 digit code as password !!
+Gateway authentication and authorization
+Please specify the requested information
+RADIUS username: v0b01g1
+RADIUS password: 
+v0b01g1@dfw-us-vpr2-r56.prod.walmart.com@pcigw-balabit-dfw.walmart.com's password: 
+Permission denied, please try again.
+v0b01g1@dfw-us-vpr2-r56.prod.walmart.com@pcigw-balabit-dfw.walmart.com's password: 
+Created home directory
+This is an official Walmart.com computer system for authorized use only.  All
+data contained on Walmart.com computer systems is owned by Walmart.com and may
+be monitored, intercepted, recorded, read, copied, or captured in any manner and
+disclosed in any manner by authorized personnel.  THERE IS NO RIGHT TO PRIVACY
+ON THIS SYSTEM.  Authorized personnel may give any potential evidence of crime
+found on Walmart.com computer systems to law enforcement officials.  USE OF THIS
+SYSTEM BY ANY USER, AUTHORIZED OR UNAUTHORIZED, CONSTITUES EXPRESS CONSENT TO
+THIS MONITORING, INTERCEPTION, RECORDING, READING, COPYING, OR CAPTURING, AND
+DISSEMINATION BY AUTHORIZED PERSONNEL.  Unauthorized use could result in
+criminal prosecution.  If you do not consent to these conditions, do not log in!
+------Interface summary ---------
+Public:                  bond0:  eth0,eth6
+Repli/CommV/DataGuard:   bond1:  eth10,eth4
+Interconnects:           bond2:  eth2,eth8 
+[v0b01g1@dfw-dbblx016b-04 ~]$ 
+[v0b01g1@dfw-dbblx016b-04 ~]$ dzdo su - oracledb
+                             
+@dfw-dbblx016b-04.prod.walmart.com:/u01/app/oracle> . oraenv
+ORACLE_SID = [oracledb] ? usapayp12
+The Oracle base has been set to /u01/app/oracle/dbbase
+usapayp12@dfw-dbblx016b-04.prod.walmart.com:/u01/app/oracle> as
+usapayp12@dfw-dbblx016b-04.prod.walmart.com:/u01/app/oracle/dba/sql> 
+usapayp12@dfw-dbblx016b-04.prod.walmart.com:/u01/app/oracle/dba/sql> s
+
+SQL*Plus: Release 12.1.0.2.0 Production on Tue Jan 5 12:54:31 2021
+
+Copyright (c) 1982, 2014, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+
+SQL> 
+SQL> 
+set lines 200 pages 2000
+col FILE_NAME format a75
+set verify off
+SELECT tablespace_name, file_name,autoextensible, BYTES/(1024*1024) "ALLOCATED(MB)",MAXBYTES/(1024*1024) "MAX SIZE(MB)" FROM DBA_DATA_FILES WHERE tablespace_name='&TBS' order by 4 desc;
+
+SQL> SQL> SQL> 
+Enter value for tbs: USERS
+
+TABLESPACE_NAME 	       FILE_NAME								   AUT ALLOCATED(MB) MAX SIZE(MB)
+------------------------------ --------------------------------------------------------------------------- --- ------------- ------------
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.1451.1047120611			   NO	       31744		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.2198.1058342681			   NO	       31744		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.1024.1041887735			   NO	       31744		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.1468.1050433697			   NO	8024		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.286.1030732575			   NO	 100		0
+
+SQL> 
+SQL> alter tablespace USERS add datafile '+DATA01' size 20G;
+
+Tablespace altered.
+
+SQL> set lines 200 pages 2000
+col FILE_NAME format a75
+set verify off
+SELECT tablespace_name, file_name,autoextensible, BYTES/(1024*1024) "ALLOCATED(MB)",MAXBYTES/(1024*1024) "MAX SIZE(MB)" FROM DBA_DATA_FILES WHERE tablespace_name='&TBS' order by 4 desc;
+SQL> SQL> SQL> Enter value for tbs: USERS
+
+TABLESPACE_NAME 	       FILE_NAME								   AUT ALLOCATED(MB) MAX SIZE(MB)
+------------------------------ --------------------------------------------------------------------------- --- ------------- ------------
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.1451.1047120611			   NO	       31744		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.2198.1058342681			   NO	       31744		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.1024.1041887735			   NO	       31744		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.2202.1061038901			   NO	       20480		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.1468.1050433697			   NO		8024		0
+USERS			       +DATA01/DFWUSAPAYP1/DATAFILE/users.286.1030732575			   NO		 100		0
+
+6 rows selected.
+
+SQL> exit
+Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+You have new mail in /var/spool/mail/oracledb
+usapayp12@dfw-dbblx016b-04.prod.walmart.com:/u01/app/oracle/dba/sql>
+
+
+
+Arc generator
+
+
+SET PAGESIZE 900;
+SET LINESIZE 900;
+COL DAY FOR A15;
+
+
+SELECT
+TO_CHAR(FIRST_TIME,'YYYY-MON-DD') DAY,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'00',1,0)),'9999') “00”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'01',1,0)),'9999') “01”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'02',1,0)),'9999') “02”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'03',1,0)),'9999') “03”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'04',1,0)),'9999') “04”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'05',1,0)),'9999') “05”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'06',1,0)),'9999') “06”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'07',1,0)),'9999') “07”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'08',1,0)),'9999') “08”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'09',1,0)),'9999') “09”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'10',1,0)),'9999') “10”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'11',1,0)),'9999') “11”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'12',1,0)),'9999') “12”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'13',1,0)),'9999') “13”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'14',1,0)),'9999') “14”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'15',1,0)),'9999') “15”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'16',1,0)),'9999') “16”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'17',1,0)),'9999') “17”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'18',1,0)),'9999') “18”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'19',1,0)),'9999') “19”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'20',1,0)),'9999') “20”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'21',1,0)),'9999') “21”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'22',1,0)),'9999') “22”,
+TO_CHAR(SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),'23',1,0)),'9999') “23”
+FROM
+V$LOG_HISTORY
+WHERE TO_CHAR(FIRST_TIME,'YYYY-MON-DD') > TO_CHAR(SYSDATE-10,'YYYY-MON-DD')
+GROUP BY TO_CHAR(FIRST_TIME,'YYYY-MON-DD'), to_date(first_time)
+ORDER BY TO_CHAR(FIRST_TIME,'YYYY-MON-DD');
+
+
+SELECT DBMS_METADATA.GET_DDL('PACKAGE','GDPR','MTEPWDATA') FROM DUAL;
+
+SELECT DBMS_METADATA.GET_DDL('PACKAGE_BODY','GDPR','MTEPWDATA') FROM DUAL;
+
+
+BEGIN
+   DBMS_OUTPUT.put_line (DBMS_METADATA.get_ddl ('PACKAGE', 'GDPR'));
+END
+/
+
+
+
+
+
+
+As per the purging policy ,scheduled  job runs every Wednesday and checks for the partitions which were created 15 days before and drops the same from DB level.
+ 
+Note:
+Recent successful Execution :- 16th Dec 2020.
+
+
+Last login: Thu Dec 17 17:20:54 on ttys000
+v0b01g1@m-c02d2blzmd6n ~ % ssh v0b01g1@dfwep11dbadm01.prod.walmart.com@prodgw-balabit-dfw.walmart.com
+The authenticity of host 'prodgw-balabit-dfw.walmart.com (10.49.252.250)' can't be established.
+RSA key fingerprint is SHA256:Hp8pIj/SMaCbEvpbBQxAYG0Htqc1wpYa/Hmzn4CeY2I.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'prodgw-balabit-dfw.walmart.com,10.49.252.250' (RSA) to the list of known hosts.
+!! You are being recorded by PCI Gateway Solution !!
+!! For Gateway Authentication please input your AD account as Username !!
+!! Gateway Password is PCI PIN + 6 Digit Token Code for RSA Hard Tokens, Users with Soft Tokens for PCI VPN - please provide the 8 digit code as password !!
+Gateway authentication and authorization
+Please specify the requested information
+RADIUS username: v0b01g1
+RADIUS password: 
+Received disconnect from 10.49.252.250 port 22:11: Gateway authentication failed
+Disconnected from 10.49.252.250 port 22
+v0b01g1@m-c02d2blzmd6n ~ % ssh v0b01g1@dfw-ep11-scan.prod.walmart.com@prodgw-balabit-dfw.walmart.com
+!! You are being recorded by PCI Gateway Solution !!
+!! For Gateway Authentication please input your AD account as Username !!
+!! Gateway Password is PCI PIN + 6 Digit Token Code for RSA Hard Tokens, Users with Soft Tokens for PCI VPN - please provide the 8 digit code as password !!
+Gateway authentication and authorization
+Please specify the requested information
+RADIUS username: v0b01g1
+RADIUS password: 
+v0b01g1@dfw-ep11-scan.prod.walmart.com@prodgw-balabit-dfw.walmart.com's password: 
+Created home directory
+Last login: Thu Dec 17 13:02:47 2020 from 10.49.252.250
+-bash: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+[v0b01g1@dfwep11dbadm03 ~]$ hostname
+dfwep11dbadm03.prod.walmart.com
+[v0b01g1@dfwep11dbadm03 ~]$ 
+[v0b01g1@dfwep11dbadm03 ~]$ 
+[v0b01g1@dfwep11dbadm03 ~]$ ps -ef | grep pmon
+oracledb 169248      1  0 Jul31 ?        00:59:35 ora_pmon_us11omsp3
+oracledb 225425      1  0 Sep18 ?        02:58:24 ora_pmon_us13omsp3
+grid     379696      1  0 Jul29 ?        00:12:23 asm_pmon_+ASM3
+grid     380563      1  0 Jul29 ?        00:13:54 apx_pmon_+APX3
+oracledb 392855 392844  0 13:03 ?        00:00:00 /bin/sh -c /u01/app/oracle/dba/bin/pmon_check_status.ksh > /dev/null 2>&1
+oracledb 392859 392855  0 13:03 ?        00:00:00 /bin/ksh /u01/app/oracle/dba/bin/pmon_check_status.ksh
+v0b01g1  394613 391393  0 13:03 pts/1    00:00:00 grep --color=auto pmon
+[v0b01g1@dfwep11dbadm03 ~]$ . oraenv
+ORACLE_SID = [v0b01g1] ? us11omsp3
+ORACLE_BASE environment variable is not being set since this
+information is not available for the current user ID v0b01g1.
+You can set ORACLE_BASE manually if it is required.
+[v0b01g1@dfwep11dbadm03 ~]$ dzdo su - oracledb
+Last login: Thu Dec 17 13:04:09 UTC 2020
+@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle> . oraenv
+ORACLE_SID = [oracledb] ? us11omsp3
+The Oracle base has been set to /u01/app/oracle/dbbase
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle> as
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> s
+
+SQL*Plus: Release 11.2.0.4.0 Production on Thu Dec 17 13:04:57 2020
+
+Copyright (c) 1982, 2013, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+
+SQL> select count(*) from labs_order_recordsales_logs;
+select count(*) from labs_order_recordsales_logs
+                     *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> desc dba_tables
+ Name					   Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ OWNER					   NOT NULL VARCHAR2(30)
+ TABLE_NAME				   NOT NULL VARCHAR2(30)
+ TABLESPACE_NAME				    VARCHAR2(30)
+ CLUSTER_NAME					    VARCHAR2(30)
+ IOT_NAME					    VARCHAR2(30)
+ STATUS 					    VARCHAR2(8)
+ PCT_FREE					    NUMBER
+ PCT_USED					    NUMBER
+ INI_TRANS					    NUMBER
+ MAX_TRANS					    NUMBER
+ INITIAL_EXTENT 				    NUMBER
+ NEXT_EXTENT					    NUMBER
+ MIN_EXTENTS					    NUMBER
+ MAX_EXTENTS					    NUMBER
+ PCT_INCREASE					    NUMBER
+ FREELISTS					    NUMBER
+ FREELIST_GROUPS				    NUMBER
+ LOGGING					    VARCHAR2(3)
+ BACKED_UP					    VARCHAR2(1)
+ NUM_ROWS					    NUMBER
+ BLOCKS 					    NUMBER
+ EMPTY_BLOCKS					    NUMBER
+ AVG_SPACE					    NUMBER
+ CHAIN_CNT					    NUMBER
+ AVG_ROW_LEN					    NUMBER
+ AVG_SPACE_FREELIST_BLOCKS			    NUMBER
+ NUM_FREELIST_BLOCKS				    NUMBER
+ DEGREE 					    VARCHAR2(10)
+ INSTANCES					    VARCHAR2(10)
+ CACHE						    VARCHAR2(5)
+ TABLE_LOCK					    VARCHAR2(8)
+ SAMPLE_SIZE					    NUMBER
+ LAST_ANALYZED					    DATE
+ PARTITIONED					    VARCHAR2(3)
+ IOT_TYPE					    VARCHAR2(12)
+ TEMPORARY					    VARCHAR2(1)
+ SECONDARY					    VARCHAR2(1)
+ NESTED 					    VARCHAR2(3)
+ BUFFER_POOL					    VARCHAR2(7)
+ FLASH_CACHE					    VARCHAR2(7)
+ CELL_FLASH_CACHE				    VARCHAR2(7)
+ ROW_MOVEMENT					    VARCHAR2(8)
+ GLOBAL_STATS					    VARCHAR2(3)
+ USER_STATS					    VARCHAR2(3)
+ DURATION					    VARCHAR2(15)
+ SKIP_CORRUPT					    VARCHAR2(8)
+ MONITORING					    VARCHAR2(3)
+ CLUSTER_OWNER					    VARCHAR2(30)
+ DEPENDENCIES					    VARCHAR2(8)
+ COMPRESSION					    VARCHAR2(8)
+ COMPRESS_FOR					    VARCHAR2(12)
+ DROPPED					    VARCHAR2(3)
+ READ_ONLY					    VARCHAR2(3)
+ SEGMENT_CREATED				    VARCHAR2(3)
+ RESULT_CACHE					    VARCHAR2(7)
+
+SQL> select owner,partitioned from dba_tables where table_name='LABS_ORDER_RECORDSALES_LOGS';
+
+OWNER			       PAR
+------------------------------ ---
+TRANSACTION_1		       YES
+
+SQL> desc dba_tab_partition        
+ERROR:
+ORA-04043: object dba_tab_partition does not exist
+
+
+SQL> desc dba_tab_partitions         
+ Name					   Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ TABLE_OWNER					    VARCHAR2(30)
+ TABLE_NAME					    VARCHAR2(30)
+ COMPOSITE					    VARCHAR2(3)
+ PARTITION_NAME 				    VARCHAR2(30)
+ SUBPARTITION_COUNT				    NUMBER
+ HIGH_VALUE					    LONG
+ HIGH_VALUE_LENGTH				    NUMBER
+ PARTITION_POSITION				    NUMBER
+ TABLESPACE_NAME				    VARCHAR2(30)
+ PCT_FREE					    NUMBER
+ PCT_USED					    NUMBER
+ INI_TRANS					    NUMBER
+ MAX_TRANS					    NUMBER
+ INITIAL_EXTENT 				    NUMBER
+ NEXT_EXTENT					    NUMBER
+ MIN_EXTENT					    NUMBER
+ MAX_EXTENT					    NUMBER
+ MAX_SIZE					    NUMBER
+ PCT_INCREASE					    NUMBER
+ FREELISTS					    NUMBER
+ FREELIST_GROUPS				    NUMBER
+ LOGGING					    VARCHAR2(7)
+ COMPRESSION					    VARCHAR2(8)
+ COMPRESS_FOR					    VARCHAR2(12)
+ NUM_ROWS					    NUMBER
+ BLOCKS 					    NUMBER
+ EMPTY_BLOCKS					    NUMBER
+ AVG_SPACE					    NUMBER
+ CHAIN_CNT					    NUMBER
+ AVG_ROW_LEN					    NUMBER
+ SAMPLE_SIZE					    NUMBER
+ LAST_ANALYZED					    DATE
+ BUFFER_POOL					    VARCHAR2(7)
+ FLASH_CACHE					    VARCHAR2(7)
+ CELL_FLASH_CACHE				    VARCHAR2(7)
+ GLOBAL_STATS					    VARCHAR2(3)
+ USER_STATS					    VARCHAR2(3)
+ IS_NESTED					    VARCHAR2(3)
+ PARENT_TABLE_PARTITION 			    VARCHAR2(30)
+ INTERVAL					    VARCHAR2(3)
+ SEGMENT_CREATED				    VARCHAR2(4)
+
+SQL> select partition_name,high_value,table_owner,table_name from dba_tab_partitions where table_name='LABS_ORDER_RECORDSALES_LOGS';
+
+PARTITION_NAME
+------------------------------
+HIGH_VALUE
+--------------------------------------------------------------------------------
+TABLE_OWNER		       TABLE_NAME
+------------------------------ ------------------------------
+LBS_ORDR_RECRDSALS_LGS_BP
+TO_DATE(' 2020-02-06 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA
+TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+
+SYS_P716
+TO_DATE(' 2020-12-03 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA
+TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+
+PARTITION_NAME
+------------------------------
+HIGH_VALUE
+--------------------------------------------------------------------------------
+TABLE_OWNER		       TABLE_NAME
+------------------------------ ------------------------------
+
+SYS_P773
+TO_DATE(' 2020-12-10 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA
+TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+
+SYS_P796
+TO_DATE(' 2020-12-17 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA
+
+PARTITION_NAME
+------------------------------
+HIGH_VALUE
+--------------------------------------------------------------------------------
+TABLE_OWNER		       TABLE_NAME
+------------------------------ ------------------------------
+TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+
+SYS_P816
+TO_DATE(' 2020-12-24 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA
+TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+
+
+SQL> set lines 999999
+SP2-0267: linesize option 999999 out of range (1 through 32767)
+SQL> 
+SQL> 
+SQL> set line 200
+SQL> set lines 200
+SQL> 
+SQL> /             
+
+PARTITION_NAME		       HIGH_VALUE									TABLE_OWNER		       TABLE_NAME
+------------------------------ -------------------------------------------------------------------------------- ------------------------------ ------------------------------
+LBS_ORDR_RECRDSALS_LGS_BP      TO_DATE(' 2020-02-06 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+SYS_P716		       TO_DATE(' 2020-12-03 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+SYS_P773		       TO_DATE(' 2020-12-10 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+SYS_P796		       TO_DATE(' 2020-12-17 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+SYS_P816		       TO_DATE(' 2020-12-24 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIA TRANSACTION_1		       LABS_ORDER_RECORDSALES_LOGS
+
+SQL>      
+SQL> exit
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> crontab -l
+#Clear tmp
+00 08 * * * /u01/app/oracle/dba/bin/clear_oracle_tmp.ksh
+
+
+#Clear dump trace
+00 05,12,20 * * * $HOME/dba/bin/clear_logs.ksh > /dev/null 2>&1
+
+
+#PMON Check for all Nagios scripts
+* * * * * /u01/app/oracle/dba/bin/pmon_check_status.ksh > /dev/null 2>&1
+
+
+#Checkwaits
+* * * * * /u01/app/oracle/dba/bin/chkwait.ksh us11omsp3 60
+* * * * * /u01/app/oracle/dba/bin/chkwait.ksh us13omsp3 60
+
+##### Stats Gathering based on ROLE and Service check [ gather_schema_stats.ksh <oracle-sid> <app-service> ]  #####
+40 07 * * 1-6 /u01/app/oracle/dba/bin/gather_schema_stats.ksh us11omsp3 us11omsp_ops
+40 08 * * 0   /u01/app/oracle/dba/bin/gather_schema_stats.ksh us11omsp3 us11omsp_TRANSACTION_1_S11
+40 07 * * 1-6 /u01/app/oracle/dba/bin/gather_schema_stats.ksh us13omsp3 us13omsp_ops
+40 08 * * 0   /u01/app/oracle/dba/bin/gather_schema_stats.ksh us13omsp3 us13omsp_TRANSACTION_1_S13
+
+
+##### Drop partitions based on ROLE and Service check [ <script>.ksh <oracle-sid> <app-service> ]  #####
+40 11 * * 0  /u01/app/oracle/dba/bin/OMS_Ingestion_tables_PART_DROP.ksh            us11omsp3 us11omsp_ops
+50 09 * * 3  /u01/app/oracle/dba/bin/OMS_LABS_LOGS_PAYLOADS_table_PART_DROP.ksh    us11omsp3 us11omsp_ops
+15 09 5 * *  /u01/app/oracle/dba/bin/OMS_30days_retention_tables_PART_DROP.ksh     us11omsp3 us11omsp_ops
+15 09 4 * *  /u01/app/oracle/dba/bin/OMS_90days_retention_tables_PART_DROP.ksh     us11omsp3 us11omsp_ops
+15 09 6 * *  /u01/app/oracle/dba/bin/OMS_180days_retention_tables_PART_DROP.ksh    us11omsp3 us11omsp_ops
+40 11 * * 0  /u01/app/oracle/dba/bin/OMS_Ingestion_tables_PART_DROP.ksh            us13omsp3 us13omsp_ops
+50 09 * * 3  /u01/app/oracle/dba/bin/OMS_LABS_LOGS_PAYLOADS_table_PART_DROP.ksh    us13omsp3 us13omsp_ops
+15 09 5 * *  /u01/app/oracle/dba/bin/OMS_30days_retention_tables_PART_DROP.ksh     us13omsp3 us13omsp_ops
+15 09 4 * *  /u01/app/oracle/dba/bin/OMS_90days_retention_tables_PART_DROP.ksh     us13omsp3 us13omsp_ops
+15 09 6 * *  /u01/app/oracle/dba/bin/OMS_180days_retention_tables_PART_DROP.ksh    us13omsp3 us13omsp_ops
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> cd ../
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba> cd bin
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin> ls -lrt
+total 1860
+-rwxr-xr-x 1 oracledb oinstall   7217 Jun 26 00:45 OMS_Ingestion_tables_PART_DROP.ksh
+-rwxr-xr-x 1 oracledb oinstall   7337 Jun 26 00:49 OMS_LABS_LOGS_PAYLOADS_table_PART_DROP.ksh
+-rwxr-xr-x 1 oracledb oinstall   7352 Jun 29 17:00 OMS_LABS_RETRY_DETAILS_tables_PART_DROP.ksh
+-rwxr-xr-x 1 oracledb oinstall   7322 Jun 29 17:03 OMS_30days_retention_tables_PART_DROP.ksh
+-rwxr-xr-x 1 oracledb oinstall   7322 Jun 29 17:05 OMS_90days_retention_tables_PART_DROP.ksh
+-rwxr-xr-x 1 oracledb oinstall   7337 Jun 29 17:07 OMS_180days_retention_tables_PART_DROP.ksh
+-rwxr-xr-x 1 oracledb oinstall  20365 Jul 28 22:32 netbkup_orcl_backup_db_21Q1.ksh
+-rwxr-xr-x 1 oracledb oinstall   2453 Jul 28 22:32 awr_topsql.ksh.orig
+-rwxr-xr-x 1 oracledb oinstall   4303 Jul 28 22:32 pn_alertlog.ksh.new
+-rwxr-xr-x 1 oracledb oinstall   1647 Jul 28 22:32 ccdb_password_change_policy_check.ksh
+-rwxr-xr-x 1 oracledb oinstall   3630 Jul 28 22:32 clear_logs.ksh
+-rwxr-xr-x 1 oracledb oinstall    751 Jul 28 22:32 agent_status.ksh
+-rwxr-xr-x 1 oracledb oinstall    803 Jul 28 22:32 aq_cleanup.ksh
+-rwxr-xr-x 1 oracledb oinstall    927 Jul 28 22:32 snap.ksh
+-rwxr-xr-x 1 oracledb oinstall   1191 Jul 28 22:32 gatherstats.ksh
+-rwxr-xr-x 1 oracledb oinstall  20620 Jul 28 22:32 netbkup_orcl_backup_db_ver6.ksh
+-rwxr-xr-x 1 oracledb oinstall   3203 Jul 28 22:32 bkup_full.ksh
+-rwxr-xr-x 1 oracledb oinstall   1535 Jul 28 22:32 topsql.ksh
+-rwxr-xr-x 1 oracledb oinstall   1801 Jul 28 22:32 topwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   7795 Jul 28 22:32 pn_space_mon.ksh.orig
+-rwxr-xr-x 1 oracledb oinstall  19116 Jul 28 22:32 chkwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   2088 Jul 28 22:32 eventwait.ksh
+-rwxr-xr-x 1 oracledb oinstall 115512 Jul 28 22:32 shr.ksh
+-rwxr-xr-x 1 oracledb oinstall   1663 Jul 28 22:32 db_status_aw.ksh
+-rwxr-xr-x 1 oracledb oinstall   1133 Jul 28 22:32 compress_logs_new.ksh
+-rwxr-xr-x 1 oracledb oinstall    611 Jul 28 22:32 arch_del_rman5.ksh
+-rwxr-xr-x 1 oracledb oinstall   2280 Jul 28 22:32 capture_inlist_sessions.ksh
+-rwxr-xr-x 1 oracledb oinstall   3231 Jul 28 22:32 block_sessions_uscartp13.ksh
+-rw-r--r-- 1 oracledb oinstall    984 Jul 28 22:32 oracleTab.raw.sid
+-rwxr-xr-x 1 oracledb oinstall   2057 Jul 28 22:32 Ingestion_tables_PART_DROP_us4omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall    682 Jul 28 22:32 intraday_seg_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall    756 Jul 28 22:32 space.ksh
+-rwxr-xr-x 1 oracledb oinstall   3425 Jul 28 22:32 clear_logs_new.ksh
+-rwxr-xr-x 1 oracledb oinstall    619 Jul 28 22:32 chk_instance.ksh
+-rwxr-xr-x 1 oracledb oinstall  10080 Jul 28 22:32 gather_schema_stats.ksh
+-rwxr-xr-x 1 oracledb oinstall   2845 Jul 28 22:32 kill_blocking_locks.ksh
+-rwxr-xr-x 1 oracledb oinstall   1995 Jul 28 22:32 db_test.ksh
+-rwxr-xr-x 1 oracledb oinstall   4663 Jul 28 22:32 kill_tools_session.ksh
+-rwxr-xr-x 1 oracledb oinstall   2454 Jul 28 22:32 failed_logon_audit.ksh
+-rwxr-xr-x 1 oracledb oinstall   3883 Jul 28 22:32 dbrole.ksh.orig
+-rwxr-xr-x 1 oracledb oinstall    987 Jul 28 22:32 obj_comment_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall    636 Jul 28 22:32 arch_del_rman.ksh
+-rwxr-xr-x 1 oracledb oinstall   1826 Jul 28 22:32 gather_stats_usunop1.sh
+-rwxr-xr-x 1 oracledb oinstall   1693 Jul 28 22:32 capture_lock_info_us4omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall   3187 Jul 28 22:32 sess.ksh
+-rwxr-xr-x 1 oracledb oinstall    613 Jul 28 22:32 rebuild_invalid_idx.ksh
+-rwxr-xr-x 1 oracledb oinstall    593 Jul 28 22:32 set_unlimited_max_extents.ksh
+-rwxr-xr-x 1 oracledb oinstall  20361 Jul 28 22:32 netbkup_orcl_backup_db_A21Q1.ksh
+-rwxr-xr-x 1 oracledb oinstall   2714 Jul 28 22:32 exp_db.ksh
+-rwxr-xr-x 1 oracledb oinstall   1005 Jul 28 22:32 ar.ksh
+-rwxr-xr-x 1 oracledb oinstall    182 Jul 28 22:32 cw.sql
+-rwxr-xr-x 1 oracledb oinstall    593 Jul 28 22:32 graph_totalwait.ksh
+-rwxr-xr-x 1 oracledb oinstall  20418 Jul 28 22:32 netbkup_orcl_backup_db_ver3.ksh
+-rwxr-xr-x 1 oracledb oinstall  20421 Jul 28 22:32 netbkup_orcl_backup_db_ver2.ksh
+-rwxr-xr-x 1 oracledb oinstall    821 Jul 28 22:32 drop_partition_cart5.ksh
+-rwxr-xr-x 1 oracledb oinstall   1502 Jul 28 22:32 db_stat.ksh
+-rwxr-xr-x 1 oracledb oinstall   4017 Jul 28 22:32 pn_locked_sessions.ksh
+-rwxr-xr-x 1 oracledb oinstall    444 Jul 28 22:32 chkwait_peakconn.ksh
+-rwxr-xr-x 1 oracledb oinstall    604 Jul 28 22:32 arch_del_rman.ksh.20100817
+-rwxr-xr-x 1 oracledb oinstall   1133 Jul 28 22:32 compress_logs.ksh
+-rwxr-xr-x 1 oracledb oinstall    611 Jul 28 22:32 arch_del_rman5.rcv
+-rwxr-xr-x 1 oracledb oinstall    263 Jul 28 22:32 kill_lock_sessions.ksh
+-rwxr-xr-x 1 oracledb oinstall   1067 Jul 28 22:32 extract_sqlarea.ksh
+-rwxr-xr-x 1 oracledb oinstall   2130 Jul 28 22:32 control_file_backup.ksh
+-rw-r--r-- 1 oracledb oinstall   1298 Jul 28 22:32 oracleInstances.raw.txt.sid.nodes.email
+-rwxr-xr-x 1 oracledb oinstall   1482 Jul 28 22:32 get_top_sql.ksh
+-rwxr-xr-x 1 oracledb oinstall    925 Jul 28 22:32 genpo_start.ksh
+-rwxr-xr-x 1 oracledb oinstall    885 Jul 28 22:32 db_health.ksh
+-rwxr-xr-x 1 oracledb oinstall    290 Jul 28 22:32 asmcmd_mount.sh
+-rwxr-xr-x 1 oracledb oinstall  18232 Jul 28 22:32 chkwait.ksh_bkp2
+-rwxr-xr-x 1 oracledb oinstall    120 Jul 28 22:33 clear_oracle_tmp.ksh
+-rwxr-xr-x 1 oracledb oinstall    160 Jul 28 22:33 arch_del_oms.rcv
+-rwxr-xr-x 1 oracledb oinstall   4556 Jul 28 22:33 kill_locks_us4omsp12.ksh
+-rwxr-xr-x 1 oracledb oinstall   1019 Jul 28 22:33 graph_aqwait.ksh
+-rwxr-xr-x 1 oracledb oinstall    947 Jul 28 22:33 genpo_stop.ksh
+-rwxr-xr-x 1 oracledb oinstall   4691 Jul 28 22:33 dbstart
+-rw-r--r-- 1 oracledb oinstall   1653 Jul 28 22:33 gather_stats_usstfp1.sh
+-rwxr-xr-x 1 oracledb oinstall    320 Jul 28 22:33 pmon_check_status.ksh
+-rwxr-xr-x 1 oracledb oinstall    853 Jul 28 22:33 keeper.ksh
+-rwxr-xr-x 1 oracledb oinstall  11637 Jul 28 22:33 nonpush.sql
+-rwxr-xr-x 1 oracledb oinstall   4706 Jul 28 22:33 cleanUp_oracle.sh
+-rwxr-xr-x 1 oracledb oinstall   9828 Jul 28 22:33 cntwait.ksh_bkp2
+-rwxr-xr-x 1 oracledb oinstall   1717 Jul 28 22:33 aq_startup.ksh
+-rwxr-xr-x 1 oracledb oinstall   4785 Jul 28 22:33 daily_awr.sh
+-rwxr-xr-x 1 oracledb oinstall   1607 Jul 28 22:33 rotate_logs.ksh
+-rwxr-xr-x 1 oracledb oinstall   6920 Jul 28 22:33 backup_capture_fts_dpr_sessions.ksh
+-rw-r--r-- 1 oracledb oinstall   1922 Jul 28 22:33 all_gather_stats_us2omsp1_TRANSACTION_1.ksh
+-rwxr-xr-x 1 oracledb oinstall   2440 Jul 28 22:33 gv_topwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   1517 Jul 28 22:33 gather_stats_usclmp1.sh
+-rwxr-xr-x 1 oracledb oinstall    592 Jul 28 22:33 tirewait.ksh
+-rwxr-xr-x 1 oracledb oinstall   2298 Jul 28 22:33 awr_topsql.ksh
+-rwxr-xr-x 1 oracledb oinstall    592 Jul 28 22:33 grant_privs.ksh
+-rwxr-xr-x 1 oracledb oinstall   3485 Jul 28 22:33 rman_bkup_disk_and_tape.ksh
+-rwxr-xr-x 1 oracledb oinstall    678 Jul 28 22:33 archive_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall   1449 Jul 28 22:33 oramenu
+-rwxr-xr-x 1 oracledb oinstall    183 Jul 28 22:33 arch_del5.rcv
+-rwxr-xr-x 1 oracledb oinstall   3266 Jul 28 22:33 add_partition.ksh
+-rwxr-xr-x 1 oracledb oinstall   8811 Jul 28 22:33 set_job_que.ksh
+-rwxr-xr-x 1 oracledb oinstall   1308 Jul 28 22:33 hb_insert_us7.sh
+-rwxr-xr-x 1 oracledb oinstall   1115 Jul 28 22:33 audit_managed_accounts.ksh
+-rw-r--r-- 1 oracledb oinstall   2112 Jul 28 22:33 all_gather_stats_us4omsp1_TRANSACTION_1.ksh
+-rwxr-xr-x 1 oracledb oinstall   2747 Jul 28 22:33 gather_stats.ksh
+-rwxr-xr-x 1 oracledb oinstall    144 Jul 28 22:33 log_switch.ksh
+-rwxr-xr-x 1 oracledb oinstall    313 Jul 28 22:33 startup_nohup.ksh
+-rwxr-xr-x 1 oracledb oinstall   4975 Jul 28 22:33 dbrole.ksh
+-rw-r--r-- 1 oracledb oinstall    834 Jul 28 22:33 before_gather_stats_usolitp1_OMSLITE.sql
+-rwxr-xr-x 1 oracledb oinstall   3225 Jul 28 22:33 bkup_archive.ksh
+-rwxr-xr-x 1 oracledb oinstall  18216 Jul 28 22:33 backup_chkwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   3568 Jul 28 22:33 gv_totalwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   7541 Jul 28 22:33 cntuser.ksh_bkp2
+-rwxr-xr-x 1 oracledb oinstall   7025 Jul 28 22:33 capture_fts_dpr_sessions.ksh
+-rwxr-xr-x 1 oracledb oinstall   3127 Jul 28 22:33 long_session_uscartp13.ksh
+-rwxr-xr-x 1 oracledb oinstall   4638 Jul 28 22:33 kill_inlist_session.ksh
+-rwxr-xr-x 1 oracledb oinstall  10179 Jul 28 22:33 cntwait.ksh
+-rwxr-xr-x 1 oracledb oinstall  18437 Jul 28 22:33 non.sql
+-rwxr-xr-x 1 oracledb oinstall    461 Jul 28 22:33 audit_fileperm.ksh
+-rwxr-xr-x 1 oracledb oinstall   4616 Jul 28 22:33 dbstart_0529
+-rwxr-xr-x 1 oracledb oinstall    148 Jul 28 22:33 stop_notify.ksh
+-rwxr-xr-x 1 oracledb oinstall   1008 Jul 28 22:33 switch_n_store_logfile.ksh
+-rwxr-xr-x 1 oracledb oinstall   6607 Jul 28 22:33 auto_awr.ksh
+-rw-r--r-- 1 oracledb oinstall   1821 Jul 28 22:33 gather_stats_usprmep1.sh
+-rwxr-xr-x 1 oracledb oinstall   8935 Jul 28 22:33 validate_db.ksh
+-rwxr-xr-x 1 oracledb oinstall   9826 Jul 28 22:33 backup_cntwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   3056 Jul 28 22:33 gv_eventwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   1058 Jul 28 22:33 db_now_sqldata.ksh
+-rwxr-xr-x 1 oracledb oinstall     71 Jul 28 22:33 exp.par
+-rwxr-xr-x 1 oracledb oinstall    736 Jul 28 22:33 db_dev_health.ksh
+-rw-r--r-- 1 oracledb oinstall   1154 Jul 28 22:33 oracleTab.raw.txt
+-rwxr-xr-x 1 oracledb oinstall   1084 Jul 28 22:33 crsstat
+-rwxr-xr-x 1 oracledb oinstall   1533 Jul 28 22:33 ggmenu122.309437.2020-07-30@18:27:42~
+-rw-r--r-- 1 oracledb oinstall     78 Jul 28 22:33 oracleInstances.raw.txt.sid
+-rwxr-xr-x 1 oracledb oinstall    886 Jul 28 22:33 chkwait_topevent.ksh
+-rwxr-xr-x 1 oracledb oinstall   1533 Jul 28 22:33 ggmenu121.310223.2020-07-30@18:27:47~
+-rwxr-xr-x 1 oracledb oinstall    793 Jul 28 22:33 stats.ksh
+-rwxr-xr-x 1 oracledb oinstall   1533 Jul 28 22:33 ggmenu112.311007.2020-07-30@18:27:50~
+-rwxr-xr-x 1 oracledb oinstall   2916 Jul 28 22:33 db_statistic.ksh
+-rwxr-xr-x 1 oracledb oinstall   2325 Jul 28 22:33 mgw_startup.ksh
+-rwxr-xr-x 1 oracledb oinstall    546 Jul 28 22:33 chkwait_countwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   1269 Jul 28 22:33 verify_df.ksh
+-rwxr-xr-x 1 oracledb oinstall   3408 Jul 28 22:33 db_status.ksh
+-rwxr-xr-x 1 oracledb oinstall   2158 Jul 28 22:33 ddl_trigger.ksh
+-rw-r--r-- 1 oracledb oinstall    241 Jul 28 22:33 db_unique_name.sql
+-rwxr-xr-x 1 oracledb oinstall   4259 Jul 28 22:33 bkup.ksh
+-rwxr-xr-x 1 oracledb oinstall   1662 Jul 28 22:33 gather_stats_usnotif1.sh
+-rwxr-xr-x 1 oracledb oinstall    370 Jul 28 22:33 hb_insert_us7.sh_bak
+-rwxr-xr-x 1 oracledb oinstall   3199 Jul 28 22:33 rman_bkup.ksh
+-rwxr-xr-x 1 oracledb oinstall    663 Jul 28 22:33 racmenu
+-rwxr-xr-x 1 oracledb oinstall   5026 Jul 28 22:33 pn_stbylag.ksh
+-rwxr-xr-x 1 oracledb oinstall   1447 Jul 28 22:33 sp_sql.ksh
+-rwxr-xr-x 1 oracledb oinstall   1833 Jul 28 22:33 gather_stats_us2crtp1.sh
+-rwxr-xr-x 1 oracledb oinstall 132735 Jul 28 22:33 shrfuncs_test.ksh
+-rwxr-xr-x 1 oracledb oinstall   7675 Jul 28 22:33 pn_space_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall   2600 Jul 28 22:33 pn_logs_archived.ksh
+-rwxr-xr-x 1 oracledb oinstall   1301 Jul 28 22:33 pn_bkup_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall   1292 Jul 28 22:33 purge_table.ksh
+-rw-r--r-- 1 oracledb oinstall     87 Jul 28 22:33 oracleInstances.raw.txt.sid.nodes
+-rwxr-xr-x 1 oracledb oinstall   2884 Jul 28 22:33 gv_con_waits.sql
+-rwxr-xr-x 1 oracledb oinstall   3219 Jul 28 22:33 pre_for_release.ksh
+-rwxr-xr-x 1 oracledb oinstall    619 Jul 28 22:33 check_db_link.ksh
+-rwxr-xr-x 1 oracledb oinstall    584 Jul 28 22:33 enqwait.ksh
+-rwxr-xr-x 1 oracledb oinstall   1868 Jul 28 22:34 gather_stats_uswpap1.sh
+-rwxr-xr-x 1 oracledb oinstall   2629 Jul 28 22:34 aq_coalesce.ksh
+-rwxr-xr-x 1 oracledb oinstall   1297 Jul 28 22:34 pn_bkupmon.ksh
+-rwxr-xr-x 1 oracledb oinstall    222 Jul 28 22:34 mount75.ksh
+-rwxr-xr-x 1 oracledb oinstall   1333 Jul 28 22:34 eventresponsewait.ksh
+-rwxr-xr-x 1 oracledb oinstall   1727 Jul 28 22:34 email_data_push_cw.ksh
+-rwxr-xr-x 1 oracledb oinstall   1835 Jul 28 22:34 gather_stats_usgskyp1.sh
+-rwxr-xr-x 1 oracledb oinstall    447 Jul 28 22:34 chkwait_peakactv.ksh
+-rwxr-xr-x 1 oracledb oinstall    593 Jul 28 22:34 chkwait_toplatch.ksh
+-rwxr-xr-x 1 oracledb oinstall    254 Jul 28 22:34 start_notify.ksh
+-rwxr-xr-x 1 oracledb oinstall  44232 Jul 28 22:34 on.lst
+-rwxr-xr-x 1 oracledb oinstall   1667 Jul 28 22:34 capture_lock_info_us2omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall   2563 Jul 28 22:34 totalwait.ksh
+-rwxr-xr-x 1 oracledb oinstall    627 Jul 28 22:34 purge_audit_log.ksh
+-rwxr-xr-x 1 oracledb oinstall   1683 Jul 28 22:34 all_part_crit_tab_us4omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall    100 Jul 28 22:34 arch_del.rcv
+-rwxr-xr-x 1 oracledb oinstall    957 Jul 28 22:34 my.ksh
+-rwxr-xr-x 1 oracledb oinstall   2769 Jul 28 22:34 drop_partition.ksh
+-rwxr-xr-x 1 oracledb oinstall   5627 Jul 28 22:34 backup_sox_failure.sh
+-rw-r--r-- 1 oracledb oinstall    618 Jul 28 22:34 oracleInstances.raw.txt
+-rwxr-xr-x 1 oracledb oinstall  20353 Jul 28 22:34 netbkup_orcl_backup_db_ver1.ksh
+-rwxr-xr-x 1 oracledb oinstall    942 Jul 28 22:34 daily_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall   2794 Jul 28 22:34 dbshut
+-rwxr-xr-x 1 oracledb oinstall    384 Jul 28 22:34 extend_qio_webstt1.ksh
+-rwxr-xr-x 1 oracledb oinstall   4295 Jul 28 22:34 pn_alertlog.ksh
+-rwxr-xr-x 1 oracledb oinstall   4521 Jul 28 22:34 intraday_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall   1765 Jul 28 22:34 rotate_logs_new.ksh
+-rwxr-xr-x 1 oracledb oinstall   1984 Jul 28 22:34 trunc_my_sqlarea.ksh
+-rwxr-xr-x 1 oracledb oinstall   4261 Jul 28 22:34 bkup_test.ksh
+-rwxr-xr-x 1 oracledb oinstall   7556 Jul 28 22:34 backup_cntuser.ksh
+-rwxr-xr-x 1 oracledb oinstall   1204 Jul 28 22:34 yesterday.ksh
+-rwxr-xr-x 1 oracledb oinstall    137 Jul 28 22:34 afiedt.buf
+-rwxr-xr-x 1 oracledb oinstall   3839 Jul 28 22:34 pn_logs_lagging.ksh
+-rw-r--r-- 1 oracledb oinstall   1615 Jul 28 22:34 before_gather_stats_us2omsp1_TRANSACTION_1.sql
+-rwxr-xr-x 1 oracledb oinstall  20486 Jul 28 22:34 netbkup_orcl_backup_db_ver4.ksh
+-rwxr-xr-x 1 oracledb oinstall 133222 Jul 28 22:34 shrfuncs.ksh
+-rwxr-xr-x 1 oracledb oinstall    638 Jul 28 22:34 cron_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall  20552 Jul 28 22:34 netbkup_orcl_backup_db_ver5.ksh
+-rwxr-xr-x 1 oracledb oinstall   4566 Jul 28 22:34 kill_locks_us2omsp12.ksh
+-rwxr-xr-x 1 oracledb oinstall    640 Jul 28 22:34 arch_del_rman_oms.ksh
+-rwxr-xr-x 1 oracledb oinstall    908 Jul 28 22:34 setup_dba_env.ksh
+-rwxr-xr-x 1 oracledb oinstall   1812 Jul 28 22:34 gather_stats_uslimop.sh
+-rwxr-xr-x 1 oracledb oinstall    218 Jul 28 22:34 chkwait_us2crtp13.ksh
+-rwxr-xr-x 1 oracledb oinstall   1634 Jul 28 22:34 db_now_unixdata.ksh
+-rwxr-xr-x 1 oracledb oinstall   2089 Jul 28 22:34 dbrole-sql.ksh
+-rwxr-xr-x 1 oracledb oinstall   2493 Jul 28 22:34 mon_max_sess.ksh
+-rwxr-xr-x 1 oracledb oinstall   1683 Jul 28 22:34 all_part_crit_tab_us2omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall    945 Jul 28 22:34 graph_eventwait.ksh
+-rwxr-xr-x 1 oracledb oinstall    742 Jul 28 22:34 minute_mon.ksh
+-rwxr-xr-x 1 oracledb oinstall   7893 Jul 28 22:34 cntuser.ksh
+-rwxr-xr-x 1 oracledb oinstall   2057 Jul 28 22:34 Ingestion_tables_PART_DROP_us2omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall   3221 Jul 28 22:34 pre_for_release_test.ksh
+-rwxr-xr-x 1 oracledb oinstall   1668 Jul 30 18:27 ggmenu112
+-rwxr-xr-x 1 oracledb oinstall   1301 Aug  1 20:32 hb_insert.sh
+-rwxr-xr-x 1 oracledb oinstall   1707 Aug  9 01:17 capture_lock_info_us11omsp.ksh
+-rwxr-xr-x 1 oracledb oinstall   4984 Aug  9 01:19 kill_locks_us11omsp1.ksh
+-rwxr-xr-x 1 oracledb oinstall   3077 Aug  9 01:38 capture_lock_info_us11omsp.sql
+drwxr-xr-x 3 oracledb oinstall   4096 Aug 11 05:23 monitoring
+-rwxr-xr-x 1 oracledb oinstall  20361 Aug 11 17:56 netbkup_orcl_backup_db_21Q2.ksh
+-rwxr-xr-x 1 oracledb oinstall  20361 Aug 11 17:56 netbkup_orcl_backup_db_21Q3.ksh
+-rwxr-xr-x 1 oracledb oinstall  20361 Aug 11 17:56 netbkup_orcl_backup_db_21Q4.ksh
+-rwxr-xr-x 1 oracledb oinstall  20361 Aug 11 17:56 netbkup_orcl_backup_db_22Q1.ksh
+drwxr-xr-x 2 oracledb oinstall   4096 Aug 11 17:57 parms
+-rwxr-xr-x 1 oracledb oinstall   1668 Sep  9 17:10 ggmenu122
+-rwxr-xr-x 1 oracledb oinstall   1668 Sep  9 17:11 ggmenu121
+-rwxr-xr-x 1 oracledb oinstall   4557 Nov  9 01:01 kill_oms_standby_long_running_sess.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_21Q1.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_21Q2.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_21Q3.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_21Q4.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_22Q1.ksh
+-rwxr-xr-x 1 oracledb oinstall   6429 Dec  1 18:00 netbkup_orcl_mstr_backup_A21Q1.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_ver1.ksh
+-rwxr-xr-x 1 oracledb oinstall   6417 Dec  1 18:00 netbkup_orcl_mstr_backup_ver2.ksh
+-rwxr-xr-x 1 oracledb oinstall   6417 Dec  1 18:00 netbkup_orcl_mstr_backup_ver3.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_ver4.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_ver5.ksh
+-rwxr-xr-x 1 oracledb oinstall   6426 Dec  1 18:00 netbkup_orcl_mstr_backup_ver6.ksh
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin>  ls *part*
+add_partition.ksh  all_part_crit_tab_us2omsp1.ksh  all_part_crit_tab_us4omsp1.ksh  drop_partition_cart5.ksh  drop_partition.ksh
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin> ls *PART*
+Ingestion_tables_PART_DROP_us2omsp1.ksh  OMS_180days_retention_tables_PART_DROP.ksh  OMS_90days_retention_tables_PART_DROP.ksh  OMS_LABS_LOGS_PAYLOADS_table_PART_DROP.ksh
+Ingestion_tables_PART_DROP_us4omsp1.ksh  OMS_30days_retention_tables_PART_DROP.ksh   OMS_Ingestion_tables_PART_DROP.ksh         OMS_LABS_RETRY_DETAILS_tables_PART_DROP.ksh
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin> more OMS_30days_retention_tables_PART_DROP.ksh
+#!/bin/ksh
+#
+if [[ $# -ne 2 ]]
+then
+        echo "Usage: OMS_30days_retention_tables_PART_DROP.ksh <oracle-sid> <app-service>"
+        exit -1
+fi
+ORACLE_SID=$1
+SERVICE=$2
+
+
+. /u01/app/oracle/.bash_11g $ORACLE_SID
+
+export PATH=$ORACLE_HOME/bin:$PATH
+MAILX="/usr/bin/Mail"; export MAILX
+MAIL_LIST="DBAdmin2@walmart.com";export MAIL_LIST
+#MAIL_LIST="gopal.sunkara0@walmartlabs.com";export MAIL_LIST
+
+# pnet related
+CNT=0
+SCRIPT_ERROR=0
+
+# std vars to be used
+LOGDIR=/u01/app/oracle/dba/log
+SQLDIR=/u01/app/oracle/dba/sql
+DATE=$(date +%Y%m%d)
+TMPDIR="/u01/app/oracle/tmp/$$"; export TMPDIR; mkdir -p ${TMPDIR}
+SQLOUT=${TMPDIR}/sql_$$.out
+MSG1=""
+MSG2=""
+SCAN_NAME=""
+user='dbi_user'
+pass=`echo U2FsdGVkX1/FANheO0CJKIaSqUXHEhvdZhlvSHVP4m4= | openssl enc -aes-256-cbc -a -d -salt -pass pass:Rvfssg`
+connect='(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST= dfw-us-scan-pr49.prod.walmart.com)(PORT=61290))(ADDRESS=(PROTOCOL=TCP)(HOST= cdc-us-scan-pr49.prod.walmart.com)(PORT=61290)) (CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME= usrcatp2_ops.gecwalmart.com)(F
+AILOVER_MODE=(TYPE=SELECT)(METHOD=BASIC)(RETRIES=180)(DELAY=5))))'
+#---------------------------------------
+end_process()
+#---------------------------------------
+{
+
+###echo "SCRIPT_ERROR=$SCRIPT_ERROR"
+if [ $SCRIPT_ERROR -eq 1 ]
+then
+        echo "SCRIPT_ERROR=ERROR $MSG1"
+        MSG2=$(echo "$MSG2" | awk -F\\n '{print "SCRIPT_ERROR=ERROR " $1 }')
+        echo "$MSG2"
+fi
+if [ $CNT -eq 0 ]
+then
+       echo "SCRIPT_ERROR=1"
+        echo "${SERVICE} service is not running!!"
+else
+       echo "SCRIPT_ERROR=0"
+       echo "${SERVICE} service is running on INST_ID:"$TRGT_INST
+fi
+
+if [ $CNT -eq 3 ]
+then
+       echo "SCRIPT_ERROR=0"
+        echo "Blackout Period!!"
+fi
+
+if [ $CNT -eq 4 ]
+then
+       echo "SCRIPT_ERROR=0"
+        echo "Unable to connect to INV DB!!"
+fi
+
+# Clean out the temp files
+rm -rf $TMPDIR
+#echo $TMPDIR
+exit 0
+
+}
+
+#---------------------------------------
+# Setup the Oracle Environment.
+#---------------------------------------
+oracle_env()
+{
+#
+if [ -f /var/opt/oracle/oratab ]
+then
+        ORATAB=/var/opt/oracle/oratab
+else
+        ORATAB=/etc/oratab
+fi
+
+ORATAB_SID=$(grep "^${ORACLE_SID}:" ${ORATAB}|awk -F: '{ print $1}')
+ORATAB_SID=${ORATAB_SID:-NULL}
+
+if [[ ${ORATAB_SID} != ${ORACLE_SID} ]]
+then
+        MSG1="Bad SID ${ORACLE_SID} specified"
+        return 1
+fi
+
+# Set up the Oracle Environemt.
+ORAENV_ASK=NO
+ORACLE_SID=${ORACLE_SID}
+. oraenv
+if [[ $? -ne 0 ]]
+then
+        MSG1="Bad return code from oraenv"
+        return 1
+fi
+
+# Create tmp directory.
+if [ ! -d /tmp/oracle-ff ]
+then
+        mkdir /tmp/oracle-ff
+fi
+}
+
+#---------------------------------------
+# END FUNCTION
+#---------------------------------------
+
+
+PMON_COUNT=$(ps -ef|grep pmon|grep $ORACLE_SID|wc -l)
+
+if [ $? -ne 0 ]
+then
+   echo "STATEMENT FAILED TO RUN... "
+   exit -1
+fi
+
+####
+if [ $PMON_COUNT -eq 0 ]
+then
+        MSG2="pmon $1 Not Found"
+SCRIPT_ERROR=0
+echo "SCRIPT_ERROR=$SCRIPT_ERROR"
+echo "PMON is down (OR) Wrong PMON"
+exit
+#end_process
+fi
+
+
+# Set up the Oracle Environment.
+oracle_env
+
+if [ $? -ne 0 ]
+then
+        SCRIPT_ERROR=1
+        MSG2="oracle_env returned with an error"
+        SCRIPT_ERROR=1
+        end_process
+fi
+
+
+#---------------------------------------
+# Check for service
+#---------------------------------------
+
+
+sqlplus -s <<-SQL >${SQLOUT} 2>&1
+/ as sysdba
+set pagesize 1000
+set echo off timing off feed off pages 0 feedback off
+set linesi 80
+
+select  'TRGT_INST:'||min(inst_id) from gv\$active_services where upper(name) like upper('%$SERVICE%') escape '\' ;
+select  'CURR_INST:'||instance_number from v\$instance;
+select  'DB_NAME:'||lower(name) from v\$database;
+select  'DB_ROLE:'||lower(database_role) from v\$database;
+select  'DB_UN_NAME:'||lower(db_unique_name) from v\$database;
+select  'INST_NAME:'||lower(instance_name) from v\$instance;
+
+exit
+SQL
+
+
+TRGT_INST=`grep TRGT_INST ${SQLOUT}|cut -d: -f2`
+CURR_INST=`grep CURR_INST ${SQLOUT}|cut -d: -f2`
+DB_NAME=`grep DB_NAME ${SQLOUT}|cut -d: -f2`
+DB_ROLE=`grep DB_ROLE ${SQLOUT}|cut -d: -f2`
+DB_UN_NAME=`grep DB_UN_NAME ${SQLOUT}|cut -d: -f2`
+INST_NAME=`grep INST_NAME ${SQLOUT}|cut -d: -f2`
+
+if [[ ${DB_ROLE} == "physical standby" ]]
+then
+echo "Physical Standby DB, ingore check"
+end_process
+fi
+
+
+if [[ ${TRGT_INST} = "" ]]
+then
+CNT=0
+$MAILX -s "FAILED: OMS_30days_retention_tables_PART_DROP for ${DB_UN_NAME} DB Failed as ${SERVICE} service is not running" $MAIL_LIST < ${SQLOUT}
+end_process
+fi
+
+if [[ ${TRGT_INST} -ne ${CURR_INST} ]]
+then
+echo Wrong instance, script should run on INST_ID:${TRGT_INST}
+CNT=1
+end_process
+fi
+
+sqlplus -s <<SQL  >${SQLOUT}
+${user}/${pass}@${connect}
+set pagesize 1000
+set echo off timing off feed off pages 0 feedback off
+set linesi 80
+
+
+select  'DB_SCAN_NAME:'||lower(DB_SCAN_NAME) from DBI_USER.DATABASE_DETAILS_PROD where DB_UNIQUE_NAME=lower('$DB_UN_NAME');
+select  'DATABASE_ROLE:'||lower(DATABASE_ROLE) from DBI_USER.DATABASE_DETAILS_PROD where DB_UNIQUE_NAME=lower('$DB_UN_NAME');
+select  'DB_UNIQUE_NAME:'||lower(DB_UNIQUE_NAME) from DBI_USER.DATABASE_DETAILS_PROD where DB_UNIQUE_NAME=lower('$DB_UN_NAME');
+select  'PARTITION_JOBS_STATE:'||lower(PARTITION_JOBS_STATE) from DBI_USER.DATABASE_DETAILS_PROD where DB_UNIQUE_NAME=lower('$DB_UN_NAME');
+
+
+SQL
+DB_SCAN_NAME=`grep DB_SCAN_NAME ${SQLOUT}|cut -d: -f2|cut -d . -f1`
+DATABASE_ROLE=`grep DATABASE_ROLE ${SQLOUT}|cut -d: -f2`
+DB_UNIQUE_NAME=`grep DB_UNIQUE_NAME ${SQLOUT}|cut -d: -f2`
+PARTITION_JOBS_STATE=`grep PARTITION_JOBS_STATE ${SQLOUT}|cut -d: -f2`
+
+if [[ ${PARTITION_JOBS_STATE} = "" ]]
+then
+CNT=4
+$MAILX -s "FAILED: OMS_30days_retention_tables_PART_DROP for ${DB_UN_NAME} DB Failed as it is unable to connect to Inventory DB" $MAIL_LIST < ${SQLOUT}
+end_process
+fi
+
+if [[ ${PARTITION_JOBS_STATE} == "blackout"  ]]
+then
+CNT=3
+echo Blackout period
+end_process
+fi
+
+
+
+#---------------------------------------
+# Partition drop Main
+#---------------------------------------
+
+sqlplus -s /nolog <<EOF >>${LOGDIR}/OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}_${DATE}.log
+connect / as sysdba
+@${SQLDIR}/before_OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}.sql
+EOF
+# ----------------------------------------------------------------------------
+echo "Partition drop start time --- " `date` > ${LOGDIR}/OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}_${DATE}.log
+# ----------------------------------------------------------------------------
+sqlplus "/ as sysdba" <<EOF >>${LOGDIR}/OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}_${DATE}.log
+@${SQLDIR}/all_OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}.sql
+EOF
+$MAILX -s "Before OMS_30days_retention_tables_PART_DROP for ${DB_UN_NAME} DB" $MAIL_LIST < /tmp/before_OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}.log
+
+if test `grep 'ORA-' ${LOGDIR}/OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}_${DATE}.log|wc -l` -ne 0
+        then
+             $MAILX -s "OMS_30days_retention_tables_PART_DROP for ${DB_UN_NAME} DB finished with Error" $MAIL_LIST < ${LOGDIR}/OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}_${DATE}.log
+        else
+             $MAILX -s "OMS_30days_retention_tables_PART_DROP for ${DB_UN_NAME} DB Finished Successfully" $MAIL_LIST < ${LOGDIR}/OMS_30days_retention_tables_PART_DROP_${DB_NAME}_${SERVICE}_${DATE}.log
+fi
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin> 
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin> crontab -l
+#Clear tmp
+00 08 * * * /u01/app/oracle/dba/bin/clear_oracle_tmp.ksh
+
+
+#Clear dump trace
+00 05,12,20 * * * $HOME/dba/bin/clear_logs.ksh > /dev/null 2>&1
+
+
+#PMON Check for all Nagios scripts
+* * * * * /u01/app/oracle/dba/bin/pmon_check_status.ksh > /dev/null 2>&1
+
+
+#Checkwaits
+* * * * * /u01/app/oracle/dba/bin/chkwait.ksh us11omsp3 60
+* * * * * /u01/app/oracle/dba/bin/chkwait.ksh us13omsp3 60
+
+##### Stats Gathering based on ROLE and Service check [ gather_schema_stats.ksh <oracle-sid> <app-service> ]  #####
+40 07 * * 1-6 /u01/app/oracle/dba/bin/gather_schema_stats.ksh us11omsp3 us11omsp_ops
+40 08 * * 0   /u01/app/oracle/dba/bin/gather_schema_stats.ksh us11omsp3 us11omsp_TRANSACTION_1_S11
+40 07 * * 1-6 /u01/app/oracle/dba/bin/gather_schema_stats.ksh us13omsp3 us13omsp_ops
+40 08 * * 0   /u01/app/oracle/dba/bin/gather_schema_stats.ksh us13omsp3 us13omsp_TRANSACTION_1_S13
+
+
+##### Drop partitions based on ROLE and Service check [ <script>.ksh <oracle-sid> <app-service> ]  #####
+40 11 * * 0  /u01/app/oracle/dba/bin/OMS_Ingestion_tables_PART_DROP.ksh            us11omsp3 us11omsp_ops
+50 09 * * 3  /u01/app/oracle/dba/bin/OMS_LABS_LOGS_PAYLOADS_table_PART_DROP.ksh    us11omsp3 us11omsp_ops
+15 09 5 * *  /u01/app/oracle/dba/bin/OMS_30days_retention_tables_PART_DROP.ksh     us11omsp3 us11omsp_ops
+15 09 4 * *  /u01/app/oracle/dba/bin/OMS_90days_retention_tables_PART_DROP.ksh     us11omsp3 us11omsp_ops
+15 09 6 * *  /u01/app/oracle/dba/bin/OMS_180days_retention_tables_PART_DROP.ksh    us11omsp3 us11omsp_ops
+40 11 * * 0  /u01/app/oracle/dba/bin/OMS_Ingestion_tables_PART_DROP.ksh            us13omsp3 us13omsp_ops
+50 09 * * 3  /u01/app/oracle/dba/bin/OMS_LABS_LOGS_PAYLOADS_table_PART_DROP.ksh    us13omsp3 us13omsp_ops
+15 09 5 * *  /u01/app/oracle/dba/bin/OMS_30days_retention_tables_PART_DROP.ksh     us13omsp3 us13omsp_ops
+15 09 4 * *  /u01/app/oracle/dba/bin/OMS_90days_retention_tables_PART_DROP.ksh     us13omsp3 us13omsp_ops
+15 09 6 * *  /u01/app/oracle/dba/bin/OMS_180days_retention_tables_PART_DROP.ksh    us13omsp3 us13omsp_ops
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/bin> cd ../
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba> cd sql
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> ls *PART*
+before_OMS_180days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql  before_OMS_90days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql  before_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us11omsp_us11omsp_ops.sql
+before_OMS_180days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql  before_OMS_90days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql  before_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us13omsp_us13omsp_ops.sql
+before_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql   before_OMS_Ingestion_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+before_OMS_30days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql   before_OMS_Ingestion_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> ls -lrt *PART*
+-rwxr-xr-x 1 oracledb oinstall 3677 Aug  8 23:56 before_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3805 Aug  8 23:57 before_OMS_Ingestion_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3828 Aug  8 23:58 before_OMS_90days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3595 Aug  8 23:59 before_OMS_180days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3841 Aug  9 02:08 before_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3677 Sep 13 21:52 before_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3805 Sep 13 21:52 before_OMS_Ingestion_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3828 Sep 13 21:52 before_OMS_90days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3595 Sep 13 21:53 before_OMS_180days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3841 Sep 13 21:54 before_OMS_30days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> hostname
+dfwep11dbadm03.prod.walmart.com
+us11omsp3@dfwep11dbadm03.prod.walmart.com:/u01/app/oracle/dba/sql> exit
+logout
+[v0b01g1@dfwep11dbadm03 ~]$ ssh dfwep11dbadm01.prod.walmart.com
+The authenticity of host 'dfwep11dbadm01.prod.walmart.com (10.49.249.154)' can't be established.
+ECDSA key fingerprint is SHA256:Lsn7emWdy5fyNA5r4Zgei/zqttfFEPClEL1yWkgJnsk.
+ECDSA key fingerprint is MD5:6a:07:6b:b7:15:08:8a:24:2e:49:a7:1c:07:6a:00:01.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'dfwep11dbadm01.prod.walmart.com,10.49.249.154' (ECDSA) to the list of known hosts.
+v0b01g1@dfwep11dbadm01.prod.walmart.com's password: 
+Created home directory
+Last login: Thu Dec 17 13:24:22 2020 from dfwep11dbadm03.prod.walmart.com
+[v0b01g1@dfwep11dbadm01 ~]$ hostname
+dfwep11dbadm01.prod.walmart.com
+[v0b01g1@dfwep11dbadm01 ~]$ dzdo su - oracledb
+Last login: Thu Dec 17 13:24:18 UTC 2020
+@dfwep11dbadm01.prod.walmart.com:/u01/app/oracle> cd dba/sql
+@dfwep11dbadm01.prod.walmart.com:/u01/app/oracle/dba/sql> ls -lrt *PART*
+-rw-r--r-- 1 oracledb oinstall  960 Jul 27 04:15 all_Ingestion_tables_PART_DROP_us6omsp1.sql
+-rwxr-xr-x 1 oracledb oinstall 3677 Aug  8 23:56 before_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3805 Aug  8 23:57 before_OMS_Ingestion_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3828 Aug  8 23:58 before_OMS_90days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3595 Aug  8 23:59 before_OMS_180days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3841 Aug  9 02:08 before_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3677 Sep 13 21:52 before_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3805 Sep 13 21:52 before_OMS_Ingestion_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3828 Sep 13 21:52 before_OMS_90days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3595 Sep 13 21:53 before_OMS_180days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rwxr-xr-x 1 oracledb oinstall 3841 Sep 13 21:54 before_OMS_30days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall 3215 Dec  4 09:15 all_OMS_90days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall 2764 Dec  4 09:15 all_OMS_90days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall 1862 Dec  5 09:15 all_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall 2764 Dec  5 09:15 all_OMS_30days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall   58 Dec  6 09:15 all_OMS_180days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall   58 Dec  6 09:15 all_OMS_180days_retention_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall   58 Dec 13 11:40 all_OMS_Ingestion_tables_PART_DROP_us13omsp_us13omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall   58 Dec 13 11:40 all_OMS_Ingestion_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall   58 Dec 16 09:50 all_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us13omsp_us13omsp_ops.sql
+-rw-r--r-- 1 oracledb oinstall  960 Dec 16 09:50 all_OMS_LABS_LOGS_PAYLOADS_table_PART_DROP_us11omsp_us11omsp_ops.sql
+@dfwep11dbadm01.prod.walmart.com:/u01/app/oracle/dba/sql> more all_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sql
+set time on
+set timing on
+set echo on
+set serveroutput on
+ALTER TABLE TRANSACTION_1.YFS_EXPORT DROP PARTITION SYS_P383 update global indexes;                                                               
+                                                                                                                                                  
+                                                                                                                                                  
+            
+ALTER TABLE TRANSACTION_1.YFS_EXPORT DROP PARTITION SYS_P493 update global indexes;                                                               
+                                                                                                                                                  
+                                                                                                                                                  
+            
+ALTER TABLE TRANSACTION_1.YFS_AUDIT DROP PARTITION SYS_P377 update global indexes;                                                                
+                                                                                                                                                  
+                                                                                                                                                  
+            
+ALTER TABLE TRANSACTION_1.YFS_AUDIT DROP PARTITION SYS_P474 update global indexes;                                                                
+                                                                                                                                                  
+                                                                                                                                                  
+            
+You have new mail in /var/spool/mail/oracledb
+@dfwep11dbadm01.prod.walmart.com:/u01/app/oracle/dba/sql> more all_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sq
+all_OMS_30days_retention_tables_PART_DROP_us11omsp_us11omsp_ops.sq: No such file or directory
+You have new mail in /var/spool/mail/oracledb
+@dfwep11dbadm01.prod.walmart.com:/u01/app/oracle/dba/sql> exit
+logout
+[v0b01g1@dfwep11dbadm01 ~]$ id
+uid=1574378591(v0b01g1) gid=1574378591(v0b01g1) groups=1574378591(v0b01g1)
+[v0b01g1@dfwep11dbadm01 ~]$ exit
+logout
+Connection to dfwep11dbadm01.prod.walmart.com closed.
+[v0b01g1@dfwep11dbadm03 ~]$ hostname
+dfwep11dbadm03.prod.walmart.com
+[v0b01g1@dfwep11dbadm03 ~]$ exit
+logout
+Connection to prodgw-balabit-dfw.walmart.com closed.
+v0b01g1@m-c02d2blzmd6n ~ % hostname 
+m-c02d2blzmd6n
+
+
+
+AWRPTI and SCP in MAC
+
+@?/rdbms/admin/awrrpt.sql
+
+@?/rdbms/admin/awrrpti.sql
+
+
+
+
+scp  t0s085c@dfw-dbblx016a-03.prod.walmart.com@prodgw-balabit-cdc.walmart.com:/tmp/HTMLOUT.tar Downloads
+!! You are being recorded by PCI Gateway Solution !!
+!! For Gateway Authentication please input your AD account as Username !!
+!! Gateway Password is PCI PIN + 6 Digit Token Code for RSA Hard Tokens, Users with Soft Tokens for PCI VPN - please provide the 8 digit code as password !!
+
+Gateway authentication and authorization
+Please specify the requested information
+RADIUS username: t0s085c
+t0s085c@dfw-dbblx016a-03.prod.walmart.com@prodgw-balabit-cdc.walmart.com’s password:
+HTMLOUT.tar                                                                                                                                                                                                                 100% 8650KB 143.3KB/s   01:00
+t0s085c@m-c02d2ap7md6n ~ %
+
+
+
+uuencode awrrpt_1_298330_298346.html awrrpt_1_298330_298346.html|mailx -s ‘AWR’  vishnu.baskar@walmart.com
+
+
+Blocking session , lock, long ops
+
+
+session by machine
+
+SELECT s.machine
+     , s.username 
+     , count(decode(s.STATUS, 'ACTIVE', 1))   as active_con
+     , count(decode(s.STATUS, 'INACTIVE', 1)0 as inactive_con
+     , count(*)                               as total_con
+FROM v$session s
+WHERE type <> 'BACKGROUND'
+GROUP BY username, machine 
+ORDER BY total_con DESC;
+
+
+By username:
+
+SELECT count(1) AS con_count, machine, username 
+FROM v$session 
+WHERE type <> 'BACKGROUND'
+GROUP BY username, machine 
+ORDER BY con_count DESC;
+
+DB Tx - Row lock contention
+
+set lines 300 pages 100
+set numwidth 10
+
+column state format a7 tru column event format a25 tru column last_sql format a60 tru col machine for a35 col inst_id for 99 col username for a18 col sid for 99999 col block_sess for 99999 select s.username,sw.inst_id, sw.sid, sw.state, sw.event, sw.seconds_in_wait seconds, s.sql_id,s.blocking_session block_sess,s.machine,s.module,sa.sql_text last_sql from gv$session_wait sw, gv$session s, gv$sqlarea sa where sw.event not in ('rdbms ipc message','smon timer','pmon timer' ,'lock manager wait for remote message', 'ges remote message', 'gcs remote message', 'gcsfor action', 'client message', 'pipe get', 'Null event', 'PX Idle Wait', 'single-task message', 'PX Deq: Execution Msg', 'KXFQ: kxfqdeq - normal deqeue', 'listen endpoint status','slave wait','wakeup time manager','SQL*Net message from client') and sw.seconds_in_wait > 0 and (sw.inst_id = s.inst_id and sw.sid = s.sid) and (s.inst_id = sa.inst_id and s.sql_address = sa.address) order by seconds desc,sql_id;
+
+BLOCKING session
+
+SELECT s1.username || '@' || s1.machine
+    || ' ( SID=' || s1.sid || ' )  is blocking '
+    || s2.username || '@' || s2.machine || ' ( SID=' || s2.sid || ' ) ' AS blocking_status
+    FROM gv$lock l1, gv$session s1, gv$lock l2, gv$session s2
+    WHERE s1.sid=l1.sid AND s2.sid=l2.sid
+    AND l1.BLOCK=1 AND l2.request > 0
+    AND l1.id1 = l2.id1
+    AND l1.id2 = l2.id2;
+
+SET PAGESIZE 300;
+SET LINESIZE 300;
+select sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from gv$session where sid= '&sid' ;
+
+select sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from gv$session where sql_id= &sql_id;
+
+select sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from gv$session where service_name= 
+	
+select sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from gv$session where status ='ACTIVE' and SERVICE_NAME='srv_dwh_can_etl'; 
+
+IDENTIFY OS PROCESS ID BASED ON DATABASE SID
+
+col sid format 999999
+col username format a20
+col osuser format a15
+select a.sid, a.serial#,a.username, a.osuser, b.spid
+from v$session a, v$process b
+where a.paddr= b.addr
+and a.sid='&sid'
+order by a.sid;
+
+———————————————————————————————
+
+
+select sid, serial#, username,status from v$session where sid in ('holder','waiter');
+
+-- OR --
+
+select decode(request,0,'Holder: ','Waiter: ')||sid sess,
+id1, id2, lmode, request, type
+from gv$lock
+where (id1, id2, type) in
+(select id1, id2, type from gv$lock where request>0)
+order by id1, request;
+
+-- OR --
+
+SELECT
+   s.blocking_session, 
+   s.sid, 
+   s.serial#, 
+   s.seconds_in_wait
+FROM
+   gv$session s
+WHERE
+   blocking_session IS NOT NULL;
+
+-- OR --
+   
+SELECT 
+   l1.sid || ' is blocking ' || l2.sid blocking_sessions
+FROM 
+   gv$lock l1, gv$lock l2
+WHERE
+   l1.block = 1 AND
+   l2.request > 0 AND
+   l1.id1 = l2.id1 AND
+   l1.id2 = l2.id2;
+   
+-- OR --
+
+SELECT sid, id1 FROM v$lock WHERE TYPE='TM';
+
+SELECT object_name FROM dba_objects WHERE object_id='&object_id_from_above_output';
+select sid,type,lmode,request,ctime,block from v$lock;
+select blocking_session, sid, wait_class,
+seconds_in_wait
+from v$session
+where blocking_session is not NULL
+order by blocking_session;
+
+LONGOPS :
+
+col TARGET for a25
+col opname for a20
+col SQL_FULLTEXT for a50
+col username for a14
+SELECT s.username,
+       sl.sid,
+       sq.executions,
+       sl.last_update_time,
+       sl.sql_id,
+       sl.sql_hash_value,
+       opname,
+       target,
+       elapsed_seconds,
+       time_remaining,
+       sq.sql_fulltext
+  FROM gv$session_longops sl
+ INNER JOIN gv$sql sq ON sq.sql_id = sl.sql_id
+ INNER JOIN gv$session s ON sl.SID = s.SID AND sl.serial# = s.serial#
+ WHERE time_remaining > 0 ;
+——————————————————————————————
+
+set echo off  linesize 200  pages 1000  head on  feedback on
+ col username format a10
+ col start_time format a15
+ col curr_time format a15
+ col osuser format a10
+ col opname format a35
+ col target format a25
+ col tremain format 999999.99
+ col elamin format 999999.99
+ select a.sid,substr(b.username,1,10) username,substr(b.osuser,1,10) osuser,to_char(a.start_time,'dd-mon:hh24:mi:ss') start_time,
+ to_char(sysdate,'dd-mon:hh24:mi:ss') curr_time,a.opname,a.target,a.totalwork,a.sofar,(a.elapsed_Seconds)/60 elamin,
+ a.time_remaining/60 tremain
+ from v$session_longops a,
+ v$session b
+ where a.totalwork<>a.sofar
+ and a.sid=b.sid
+ order by 3
+ /
+—————————————————————————————————————————————
+
+Longops percentage completed:
+
+SELECT opname, target, ROUND((sofar/totalwork),4)*100 Percentage_Complete, start_time, CEIL(time_remaining/60) Max_Time_Remaining_In_Min, FLOOR(elapsed_seconds/60) Time_Spent_In_Min FROM v$session_longops WHERE sofar != totalwork;
+
+————————
+
+set lines 200 pagesize 1000
+col USERNAME format a10
+col OPNAME  format a10
+col MESSAGE for a20
+SELECT USERNAME,inst_id,sid, serial#,sql_id, opname,start_time,
+last_update_time, round(time_remaining/60,2) "REMAIN MINS",
+round(elapsed_seconds/60,2) "ELAPSED MINS",
+round((time_remaining+elapsed_seconds)/60,2)"TOTAL MINS", message
+FROM gv$session_longops
+WHERE sofar<>totalwork
+AND time_remaining <> '0'
+order by elapsed_seconds desc;
+———————————————————————————————————————————
+set lines 200 pagesize 1000
+col USERNAME format a10
+col OPNAME  format a10
+col MESSAGE for a20
+SELECT USERNAME,inst_id,sid, serial#,sql_id, opname,start_time,
+last_update_time, round(time_remaining/60,2) "REMAIN MINS",
+round(elapsed_seconds/60,2) "ELAPSED MINS",
+round((time_remaining+elapsed_seconds)/60,2)"TOTAL MINS", message
+FROM gv$session_longops
+WHERE sofar<>totalwork
+AND time_remaining <> '0' and sql_id ='bavss56dkn95d'
+order by elapsed_seconds desc;
+
+Exec dbms_sqltune.accept_sql_profile(task_name => 'TASK_246968',  task_owner => 'SYS', replace => TRUE);
+
+
+
+CHECK the Tables
+
+set lines 200 pages 2000
+col FILE_NAME format a75
+set verify off
+SELECT tablespace_name, file_name,autoextensible, BYTES/(1024*1024) "ALLOCATED(MB)",MAXBYTES/(1024*1024) "MAX SIZE(MB)" FROM DBA_DATA_FILES WHERE tablespace_name='&TBS' order by 4 desc;
+
+
+Cipher connection for HO
+
+
+ssh oracle@ceri800b.wal-mart.com -c aes256-cbc
+
+
+
+Common commands:
+
+
+Max process:
+
+SELECT RESOURCE_NAME, CURRENT_UTILIZATION, MAX_UTILIZATION, LIMIT_VALUE FROM V$RESOURCE_LIMIT WHERE RESOURCE_NAME IN ( 'sessions', 'processes');
+
+
+UP TIME for instance:
+
+select instance_name,
+to_char(startup_time,'mm/dd/yyyy hh24:mi:ss') as startup_time 
+from v$instance;
+
+ 
+Cpu check :
+
+topas
+
+Memory check :
+
+ vmstat |tail -1 |awk '{printf("Total Free memory in GB %10d\n",$4/256/1024)}'
+
+
+CPU usage for active session :
+
+SELECT
+   s.username,
+   t.sid,
+   s.serial#,
+   SUM(VALUE/100) as "cpu usage (seconds)"
+FROM
+   v$session s,
+   v$sesstat t,
+   v$statname n
+WHERE
+   t.STATISTIC# = n.STATISTIC#
+AND
+   NAME like '%CPU used by this session%'
+AND
+   t.SID = s.SID
+AND
+   s.status='ACTIVE'
+AND
+   s.username is not null
+GROUP BY username,t.sid,s.serial#
+/
+
+
+
+create or replace PACKAGE BODY USER_SESSION
+as
+procedure check_session (q_sid NUMBER default 0)
+is
+sqlquery varchar2(500);
+session_exist varchar2(30);
+sid_exist varchar2(30);
+q_serial NUMBER;
+user_name varchar2(500);
+message varchar2(1000);
+my_sid NUMBER ;
+my_machine varchar2(500);
+my_sqlid varchar2(100);
+my_osuser varchar2(30);
+my_status varchar2(8);
+my_program varchar2(48);
+my_service_name varchar2(64);
+my_last_call_et NUMBER;
+BEGIN
+   my_sid := 1;
+   user_name := 'DEFAULT';
+   my_sqlid := 'ABC';
+   my_machine := 'DEFAULT';
+
+  if  q_sid = 0 then
+   dbms_output.put_line('*** sid cannot be 0 ***');
+  else
+   select sid,serial#,machine,nvl(sql_id,'empty'),username,osuser,status,program,service_name,last_call_et
+   into my_sid,q_serial,my_machine,my_sqlid,user_name, my_osuser,my_status,my_program,my_service_name,my_last_call_et
+   from v$session where sid=q_sid;
+   dbms_output.put_line('*** session infor sid  is '||q_sid||', serial is '||q_serial||' , username is '||user_name||' , machine is '||my_machine||' , sql_id is '||my_sqlid||' , osuser is '||my_osuser||' , status is '||my_status||' , program is '||my_program||' , service name is '||my_service_name||' , last_call_et is '||my_last_call_et||' ***');
+
+  end if;
+
+END check_session;
+
+procedure kill_session (q_sid NUMBER default 0, q_user varchar2 default 'DEFAULT')
+is
+sqlquery varchar2(500);
+session_exist varchar2(30);
+q_serial NUMBER;
+user_name varchar2(500);
+message varchar2(1000);
+my_sid NUMBER;
+my_machine varchar2(500);
+my_sqlid varchar2(100);
+my_osuser varchar2(30);
+my_status varchar2(8);
+my_program varchar2(48);
+my_service_name varchar2(64);
+my_last_call_et NUMBER;
+my_logon_time date;
+my_sysdate date;
+db_role varchar(30);
+not_parallel varchar2(30);
+my_flag number;
+BEGIN
+   not_parallel := 'TRUE';
+   my_flag :=0;
+   my_sid := 0;
+   user_name := 'DEFAULT';
+   my_sqlid := 'ABC';
+   my_machine := 'DEFAULT';
+
+  begin
+  select nvl(sid,0),serial#,machine,nvl(sql_id,'EMPTY'),nvl(username,'EMPTY'),osuser,status,program,service_name,last_call_et,logon_time into my_sid,q_serial,my_machine,my_sqlid,user_name,my_osuser,my_status,my_program,my_service_name,my_last_call_et,my_logon_time from v$session where sid=q_sid and sid not in (select sid from v$px_process where sid is not null);
+
+  exception
+  when no_data_found then
+   dbms_output.put_line('*** You cannot kill this sid because this sid is  parallel ****');
+   select nvl(sid,0),serial#,machine,nvl(sql_id,'EMPTY'),nvl(username,'EMPTY'),osuser,status,program,service_name,last_call_et,logon_time into my_sid,q_serial,my_machine,my_sqlid,user_name,my_osuser,my_status,my_program,my_service_name,my_last_call_et,my_logon_time from v$session where sid=q_sid ;
+
+   dbms_output.put_line('*** session infor sid  is '||q_sid||', serial is '||q_serial||' , username is '||user_name||' , machine is '||my_machine||' , sql_id is '||my_sqlid||' , osuser is '||my_osuser||' , status is '||my_status||' , program is '||my_program||' , service name is '||my_service_name||' , last_call_et is '||my_last_call_et||', logon_time is '||my_logon_time||' ***');
+
+   not_parallel := NULL;
+  end;
+if  q_sid = 0 then
+   dbms_output.put_line('*** sid cannot be 0 ***');
+elsif q_user is NULL then
+    dbms_output.put_line('*** os userid cannot be NULL ***');
+elsif not_parallel is not null then
+  select nvl(sid,0),serial#,machine,nvl(sql_id,'EMPTY'),nvl(username,'EMPTY'),osuser,status,program,service_name,last_call_et,logon_time into my_sid,q_serial,my_machine,my_sqlid,user_name,my_osuser,my_status,my_program,my_service_name,my_last_call_et,my_logon_time from v$session where sid=q_sid ;
+
+
+    if upper(user_name) in ('','EMPTY','SYS','SYSBACKUP','SYSDG','SYSKM','SYSTEM','XDB','XS$NULL','ORACLE_DBA','ORACLE_OCM','OUTLN','OJVMSYS','DBSNMP','DIP','ANONYMOUS','APPQOSSYS','AUDSYS') then
+   dbms_output.put_line('*** You cannot kill this sid because this sid '||my_sid||' is not belong to your schema ****');
+    else
+     dbms_output.put_line('*** session infor sid  is '||q_sid||', serial is '||q_serial||' , username is '||user_name||' , machine is '||my_machine||' , sql_id is '||my_sqlid||' , osuser is '||my_osuser||' , status is '||my_status||' , program is '||my_program||' , service name is '||my_service_name||' , last_call_et is '||my_last_call_et||', logon_time is '||my_logon_time||' ***');
+
+
+   select sysdate into my_sysdate from dual;
+   select database_role into db_role from v$database;
+if db_role='PRIMARY'
+then
+   insert into SYS.SESSION_KILL_DETAILS select a.sid as SID,
+       a.serial# as SERIAL#,
+       a.username as USERNAME,
+       a.osuser as OSUSER,
+       a.status as STATUS,
+       a.machine as MACHINE,
+       a.module as MODULE,
+       a.sql_id as SQL_ID,
+       a.prev_sql_id as PreviousSqlId,
+       a.logon_time as LOGON_TIME,
+       my_sysdate as KILL_TIME,
+       a.last_call_et as LAST_CALL_ET,
+       a.event as EVENT,
+       'ANTMAN kill',
+       q_user
+  from v$session  a where sid=q_sid;
+end if;
+
+  begin
+  execute immediate 'alter system kill session ''' || q_sid || ',' || q_serial || '''  immediate';
+  EXCEPTION
+  when OTHERS then
+   dbms_output.put_line('  ');
+   end;
+   dbms_output.put_line('*** session sid '||q_sid||' is killed ****');
+   dbms_output.put_line('*** killed  infor of sid inserted to SYS.SESSION_KILL_DETAILS table ****');
+   end if;
+else
+   dbms_output.put_line(' ');
+end if;
+
+END kill_session;
+
+END USER_SESSION;
+
+End 
+/
+
+
+select trim(text) from user_source
+where name='USER_SESSION' AND type='PACKAGE BODY';
+
+
+DG sync status for physical:
+
+=============================
+
+ select database_role from v$database;
+
+select al.thrd "Thread", almax "Last Seq Received", lhmax "Last Seq Applied"
+  from (select thread# thrd, max(sequence#) almax
+  	   from v$archived_log
+  	   where resetlogs_change#=(select resetlogs_change# from v$database)
+  	   group by thread#) al,
+  	  (select thread# thrd, max(sequence#) lhmax
+  	   from v$log_history
+  	   where resetlogs_change#=(select resetlogs_change# from v$database)
+  	   group by thread#) lh
+  where al.thrd = lh.thrd;
+
+
+
+EXA
+
+
+ssh edcep16dbadm01.prod.walmart.com
+
+[root@edcep16dbadm01 ~]# ll /opt/oracle.ahf/AHF-LINUX_v22.1.1.zip
+-rwxrwxrwx 1 root root 284378255 Jun  9 05:06 /opt/oracle.ahf/AHF-LINUX_v22.1.1.zip
+
+v0p01cf@edcep16dbadm01 ~]$ df -h /tmp
+Filesystem                   Size  Used Avail Use% Mounted on
+/dev/mapper/VGExaDb-LVDbTmp  100G  567M  100G   1% /tmp
+[v0p01cf@edcep16dbadm01 ~]$ cp /opt/oracle.ahf/AHF-LINUX_v22.1.1.zip /tmp
+
+
+
+
+
+
+ssh <on target server>
+dzdo su - 
+
+cd /opt/oracle.ahf/
+rm -rf /opt/oracle.ahf/AHF-LINUX_v21.4.0.zip
+scp -o StrictHostKeyChecking=no v0b01g1@edcep16dbadm01.prod.walmart.com:/opt/oracle.ahf/AHF-LINUX_v22.1.1.zip .
+
+scp -o StrictHostKeyChecking=no v0b01g1@edcep16dbadm01.prod.walmart.com:/tmp/AHF-LINUX_v22.1.1.zip .
+ 
+exachk -v
+tfactl version -all
+tfactl uninstall
+cd /opt/oracle.ahf
+unzip AHF-LINUX_v22.1.1.zip
+ls -lrt
+./ahf_setup -ahf_loc /opt -silent -data_dir /u01/app/grid/
+ 
+ 
+For more details refer to the below MOS document.
+Oracle Exadata Database Machine EXAchk (Doc ID 1070954.1)
+ 
+ 
+cd /opt/oracle.SupportTools/exachk
+>nohup.log
+ls -lrt /u01/app/oracle/product
+ps -ef | grep d.bin
+cd /opt/oracle.SupportTools/exachk
+nohup sh exachk -s > nohup.log &
+ipmitool sunoem cli "show /SP system_identifier" | grep "system_identifier ="—> to know host number
+ 
+tail -40f nohup.log
+
+export FILE1=`grep -ir "zip" /opt/oracle.SupportTools/exachk/nohup.log | cut -c 24-`
+echo $FILE1
+ 
+dzdo su - oracledb
+ 
+export ORACLE_HOME=/u01/app/oracle/product/19
+/u01/app/oracle/product/19/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_19.txt
+export ORACLE_HOME=/u01/app/oracle/product/18
+/u01/app/oracle/product/18/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_18.txt
+export ORACLE_HOME=/u01/app/oracle/product/12201
+/u01/app/oracle/product/12201/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_12201.txt
+export ORACLE_HOME=/u01/app/oracle/product/12102
+/u01/app/oracle/product/12102/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_12102.txt
+export ORACLE_HOME=/u01/app/oracle/product/11204
+/u01/app/oracle/product/11204/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_11204.txt
+exit
+ 
+dzdo su - grid
+ 
+export ORACLE_HOME=/u01/app/grid/product/19
+/u01/app/grid/product/19/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_grid_19.txt
+export ORACLE_HOME=/u01/app/12.1.0.2/grid
+/u01/app/12.1.0.2/grid/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_grid_12102.txt
+export ORACLE_HOME=/u01/app/grid/product/12201
+/u01/app/grid/product/12201/OPatch/opatch lsinventory -detail  > /tmp/`hostname`_opatch_lsinventory_grid_12201.txt
+exit
+ 
+dzdo su - 
+
+cd /tmp
+ 
+tar -cvf opatch_`hostname`.tar *opatch_lsinventory_*.txt
+
+ls -lrt opatch_`hostname`.tar        —> to check output
+ 
+ 
+export FILE1=`grep -ir "zip" /opt/oracle.SupportTools/exachk/nohup.log | cut -c 24-`
+echo $FILE1
+scp -o StrictHostKeyChecking=no /tmp/opatch_`hostname`.tar v0b01g1@edcep18dbadm01:/tmp  ## You can using as staging for files
+
+--- Run below cmd once Exachk get completed.
+export FILE1=`grep -ir "zip" /opt/oracle.SupportTools/exachk/nohup.log | cut -c 24-`
+echo $FILE1
+scp -o StrictHostKeyChecking=no $FILE1 v0b01g1@edcep18dbadm01:/tmp
+
+
+s
+curl -T exachk_edcep18dbadm01_edcxwsiamp1_061022_065255_2023XLA06F.zip -u vishnu.baskar@walmartlabs.com https://transport.oracle.com/upload/ep/issue/3-29777690641/
+ 
+curl -T opatch_cdcep18dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783559071/
+
+curl -T exachk_cdcep18dbadm01_cdcxwsiamp1_061122_034056_2018XLA046.zip  -u vishnu.baskar@walmartlabs.com https://transport.oracle.com/upload/ep/issue/3-29783086454/
+
+
+curl -T opatch_edcep19dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783086454/
+
+curl -T exachk_edcep19dbadm01_edcxussiamp1_061122_035956_2023XLA07G.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783086454/
+
+
+curl -T opatch_cdcep19dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783208431/
+
+curl -T exachk_cdcep19dbadm01_cdcxussiamp1_061122_054534_2017XLA08B.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783208431/
+
+
+curl -T opatch_edcep20dbadm01.prod.walmart.com.tar -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783837271/
+
+curl -T exachk_edcep20dbadm01_edcxusiscp1_061122_074931_2023XLA06H.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783837271/
+
+
+curl -T opatch_cdcep20dbadm01.prod.walmart.com.tar -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783467712/
+
+curl -T exachk_cdcep20dbadm01_cdcxusiscp1_061122_075147_2017XLA0KL.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783467712/
+
+
+curl -T  opatch_edcep21dbadm01.prod.walmart.com.tar -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29784485031/
+
+curl -T exachk_edcep21dbadm01_edcxusrmdp1_061122_075422_1910XL20AG.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29784485031/
+
+
+
+curl -T  opatch_cdcep17dbadm01.prod.walmart.com.tar -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29784198381/
+
+curl -T exachk_cdcep17dbadm01_cdcxmxrvrp1_061122_095913_2012XLA0XE.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29784198381/
+
+
+curl -T  opatch_edcep17dbadm01.prod.walmart.com.tar -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783807421/
+
+curl -T exachk_edcep17dbadm01_edcxmxrvrp1_061122_102442_2023XLA059.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29783807421/
+
+
+curl -T  opatch_cdc-eq01dbadm01.qa.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29785787118/
+
+
+curl -T exachk_cdc-eq01dbadm01_cdcxuspltsa1_061122_10518_1752XC201T.zip  -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29785787118/
+
+
+curl -T   opatch_cdcep21dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29785768601/
+
+curl -T exachk_cdcep21dbadm01_cdcxusrmdp1_061122_131748_1910XL20A3.zip  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29785768601/
+
+———
+
+curl -T  opatch_cdc-ep03dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29786656351/
+
+
+curl -T exachk_cdc-ep03dbadm01_cdcxussiamp1_061222_033618_1752XC200C.zip  -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29786656351/
+
+
+curl -T opatch_edcep01dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29786656366/
+
+curl -T exachk_edcep01dbadm01_edcxcnintpp1_061222_033412_1910XL20AN.zip   -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29786656366/
+
+
+curl -T  opatch_edcep02dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788885901/
+
+curl -T exachk_edcep02dbadm01_edcxmxintpp1_061222_033217_1910XL20AF.zip   -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788885901/
+
+
+curl -T  opatch_cdcep08dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788959951/
+
+curl -T  exachk_cdcep08dbadm01_cdcxuspltsp1_061222_052045_1908XL2083.zip    -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788959951/
+
+
+curl -T  opatch_edcep13dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788959966/
+
+curl -T  exachk_edcep13dbadm01_edcxusrcdbip_061222_05187_2015XLA05F.zip   -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788959966/
+
+
+curl -T  opatch_cdcep09dbadm01.prod.walmart.com.tar  -u vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29789130011/
+
+curl -T  exachk_cdcep09dbadm01_cdcxwsiamp1_061222_065117_1902XD2035.zip   -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29789130011/
+
+
+curl -T opatch_edcep15dbadm01.prod.walmart.com.tar  -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788877201/
+
+curl -T  exachk_edcep15dbadm01_edcxukiamp1_061222_073559_2017XLA0NJ.zip  -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788877201/
+
+
+curl -T opatch_cdcep15dbadm01.prod.walmart.com.tar -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788877216/
+
+curl -T  exachk_cdcep15dbadm01_cdcxukiamp1_061222_073611_2018XLA048.zip    -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29788877216/
+
+
+curl -T opatch_cdcep16dbadm01.prod.walmart.com.tar -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29789258051/
+
+curl -T exachk_cdcep16dbadm01_cdcxukrovrp1_061222_073740_2015XLA025.zip    -u  vishnu.baskar@walmartlabs.com  https://transport.oracle.com/upload/ep/issue/3-29789258051/
+
+
+
+
+deeraj.gowda@oracle.com
+
+cdc-ep13 to cdc-ep20    --->> curl will not work
+will work from only ecd-ep13 to edc-ep20
+will work from only edc-ep13 to edc-ep20
+
+AK00638904 —>  EDC-EP18 
+PROACTIVE ACS Patch Event Prep | Exadata -  EDC-EP18  - PROD | AK00638904 | APR 2022 QFSDP | Walmart
+
+ AK00637991 —> CDC-EP18
+PROACTIVE ACS Patch Event Prep | Exadata -  CDC-EP18  - PROD | AK00637991 | APR 2022 QFSDP | Walmart
+
+ AK00638905 —> EDC-EP19
+PROACTIVE ACS Patch Event Prep | Exadata -  EDC-EP19  - PROD | AK00638905 | APR 2022 QFSDP | Walmart
+
+AK00638015  —> CDC-EP19
+PROACTIVE ACS Patch Event Prep | Exadata -   CDC-EP19 - PROD | AK00638015 | APR 2022 QFSDP | Walmart
+
+AK00639985  —> EDC-EP20
+PROACTIVE ACS Patch Event Prep | Exadata -   EDC-EP20 - PROD | AK00639985 | APR 2022 QFSDP | Walmart
+
+AK00638018 —> CDC-EP20
+PROACTIVE ACS Patch Event Prep | Exadata -   CDC-EP20 - PROD | AK00638018 | APR 2022 QFSDP | Walmart
+
+AK00437025 —> EDC-EP21
+PROACTIVE ACS Patch Event Prep | Exadata -   EDC-EP21 - PROD | AK00437025 | APR 2022 QFSDP | Walmart
+
+AK00637990 —> CDC-EP17
+PROACTIVE ACS Patch Event Prep | Exadata -    CDC-EP17 - PROD | AK00637990 | APR 2022 QFSDP | Walmart
+
+AK00626133 —> EDC-EP17
+PROACTIVE ACS Patch Event Prep | Exadata -    EDC-EP17 - PROD | AK00626133 | APR 2022 QFSDP | Walmart
+
+AK00420737 —> CDC-EQ01
+PROACTIVE ACS Patch Event Prep | Exadata -    CDC-EQ01 - PROD | AK00420737 | APR 2022 QFSDP | Walmart
+
+AK00437031 —> CDC-EQ02
+PROACTIVE ACS Patch Event Prep | Exadata -     CDC-EQ02  - PROD | AK00437031 | APR 2022 QFSDP | Walmart —— hold 
+
+AK00437026 —> CDC-EP21
+PROACTIVE ACS Patch Event Prep | Exadata -     CDC-EP21  - PROD | AK00437026 | APR 2022 QFSDP | Walmart
+——
+
+AK00420739 —> CDC-EP03
+PROACTIVE ACS Patch Event Prep | Exadata -     CDC-EP03  - PROD | AK00420739 | APR 2022 QFSDP | Walmart
+
+AK00437023 —> EDC-EP01
+PROACTIVE ACS Patch Event Prep | Exadata -     EDC-EP01 - PROD |  AK00437023 | APR 2022 QFSDP | Walmart
+
+AK00437024 —> EDC-EP02
+PROACTIVE ACS Patch Event Prep | Exadata -     EDC-EP02 - PROD |  AK00437024 | APR 2022 QFSDP | Walmart
+
+AK00437017 —> CDC-EP08
+PROACTIVE ACS Patch Event Prep | Exadata -     CDC-EP08 - PROD |  AK00437017 | APR 2022 QFSDP | Walmart
+
+AK00626138 —> EDC-EP13
+PROACTIVE ACS Patch Event Prep | Exadata -    EDC-EP13 - PROD |  AK00626138 | APR 2022 QFSDP | Walmart
+
+AK00437017 —>-CDC-EP09
+PROACTIVE ACS Patch Event Prep | Exadata -    CDC-EP09  - PROD |  AK00437017  | APR 2022 QFSDP | Walmart
+
+
+AK00626131 —>-EDC-EP15
+PROACTIVE ACS Patch Event Prep | Exadata -    EDC-EP15  - PROD |  AK00626131  | APR 2022 QFSDP | Walmart
+
+AK00637145 —>-CDC-EP15
+PROACTIVE ACS Patch Event Prep | Exadata -    CDC-EP15  - PROD |  AK00637145  | APR 2022 QFSDP | Walmart
+
+AK00637146 —>-CDC-EP16
+PROACTIVE ACS Patch Event Prep | Exadata -    CDC-EP16  - PROD |  AK00637146  | APR 2022 QFSDP | Walmart
+
+
+
+
+
+Explain plan for query
+
+
+Run the query and check the plan with the below command:
+
+SELECT * FROM TABLE(DBMS_XPLAN. DISPLAY_CURSOR()); — to show explain plan
+
+select * from table(dbms_xplan.display_awr('d538akr0d69u6')); 
+
+To check the sql text:
+
+select sql_id,sql_text from gv$sqlarea where sql_id=‘favxkc23xv42q'; 
+
+
+Explain plan for a sql_id from cursor :
+
+set lines 2000
+set pagesize 2000
+
+SELECT * FROM table(DBMS_XPLAN.DISPLAY_CURSOR('&sql_id'));
+
+
+Explain plan of a sql_id from AWR:
+
+SELECT * FROM table(DBMS_XPLAN.DISPLAY_AWR('&sql_id'));
+
+684mut1vkc5y4
+
+execute dbms_sqltune.accept_sql_profile(task_name => 'TASK_15364', task_owner => 'SYS', replace => TRUE);
+
+exec dbms_sqltune.accept_sql_profile(task_name => 'TASK_15368', task_owner => 'SYS', replace => TRUE);
+
+
+
+column name format a30 column category format a30 column status format a10
+select a.name, a.status, a.CREATED, a.LAST_MODIFIED, a.CATEGORY, b.sql_id from DBA_SQL_PROFILES a, (select distinct sql_id,sql_profile from (select sql_id,sql_profile from DBA_HIST_SQLSTAT where sql_id ='cuh3t5s7gysag' union select sql_id,sql_profile from v$sql where sql_id ='cuh3t5s7gysag' )) b where a.name=b.sql_profile;
+
+EXECUTION. DURATION OF QUERY:
+
+select a.instance_number inst_id, a.snap_id,a.plan_hash_value, to_char(begin_interval_time,'dd-mon-yy hh24:mi') btime, abs(extract(minute from (end_interval_time-begin_interval_time)) + extract(hour from (end_interval_time-begin_interval_time))*60 + extract(day from (end_interval_time-begin_interval_time))*24*60) minutes,
+executions_delta executions, round(ELAPSED_TIME_delta/1000000/greatest(executions_delta,1),4) "avg duration (sec)" from dba_hist_SQLSTAT a, dba_hist_snapshot b
+where sql_id='&sql_id' and a.snap_id=b.snap_id
+and a.instance_number=b.instance_number
+order by snap_id desc, a.instance_number;
+
+
+
+Grant  and Revoke
+
+
+grant select,insert,update,delete on REGULATORY_COMPLIANCE.GLM_NON_LICENSE_DOCUMENT to BI_CMP_USER;
+
+
+HO L2 team —— 
+
+#5SJ99n=
+
+WMT Tech Ops Oracle L2 <>
+ORAIBM@email.wal-mart.com
+
+————————————————————————
+select instance_name from v$instance;
+
+select username,account_status from dba_users where username in ('DBAASUSER');
+
+alter user DBAASUSER account unlock;
+
+select username,account_status from dba_users where username in ('PLC_AKGI_APP1');
+
+ alter user DBAASUSER account lock;
+
+
+select username,account_status from dba_users where username in ('PLC_AKGI_APP1');
+
+alter user PLC_AKGI_APP1 account unlock;
+
+
+
+select username,account_status from dba_users where username in ('CONFIGURATION_APP1’,’TRANSACTION_1_APP','STATS_APP','METADATA_PRD_APP');
+——————
+
+INSTANCE_NAME
+----------------
+sciamp12
+
+SQL> select username,account_status from dba_users where username in ('DBAASUSER’,);
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+DBAASUSER
+OPEN
+
+
+SQL> select count(*) gv$session where username='DBAASUSER';
+select count(*) gv$session where username='DBAASUSER'
+                           *
+ERROR at line 1:
+ORA-00923: FROM keyword not found where expected
+
+
+SQL>  select count(*) from gv$session where username='DBAASUSER';
+
+  COUNT(*)
+----------
+	 0
+
+SQL> alter user DBAASUSER account lock;
+
+User altered.
+
+SQL> select count(*) gv$session where username='DBAASUSER';
+select count(*) gv$session where username='DBAASUSER'
+                           *
+ERROR at line 1:
+ORA-00923: FROM keyword not found where expected
+
+
+SQL>  select username,account_status from dba_users where username in ('DBAASUSER');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+DBAASUSER
+LOCKED
+
+
+SQL> 
+
+
+
+
+If we work on public holiday , comp off and extra allowance 
+
+https://one.walmart.com/content/dam/gts-spark/home/me@/salary/Shift-Allowance-Policy.pdf
+
+
+
+IMPDP runs long time
+——————————————————
+
+Check  — ps -ef|grep lspatches 
+
+Check what is the cpu utilization in top
+3:37
+and is it showing all ksh processes
+
+Immediately execute the below command 
+
+/oradba/rahpande/add_lspatch_cleanup_to_cron.sh
+
+
+
+In doubt transaction 
+
+select local_tran_id, state from dba_2pc_pending where  local_tran_id='3627.27.21686';
+
+
+select 'rollback force '''||local_tran_id||''' ;' from dba_2pc_pending where local_tran_id='3876.15.19038';
+
+
+
+—————————————————————————————————————————
+
+Getting your Transaction ID
+
+You can get the Transaction ID for a session by joining V$SESSION.TADDR to V$TRANSACTION.ADDR.
+
+A Transaction ID consists of the Undo Segment #, the Slot # and the SEQ #.
+
+For example :
+SQL> select dbms_transaction.local_transaction_id from dual;
+
+LOCAL_TRANSACTION_ID
+--------------------------------------------------------------------------------
+6.3.9463
+
+SQL>
+
+Thus, my current transaction is in Undo Segment 6, Slot 3, Sequence 9463.
+SQL>    select count(*) from v$transaction;
+
+  COUNT(*)
+----------
+         1
+
+SQL> col username format a12
+SQL> l
+  1  select s.username, s.sid, s.serial#,t.xidusn, t.xidslot, t.xidsqn from v$session s, v$transaction t where s.taddr=t.addr ;
+SQL> /
+
+USERNAME            SID    SERIAL#     XIDUSN    XIDSLOT     XIDSQN
+------------ ---------- ---------- ---------- ---------- ----------
+HEMANT               38         23          6          3       9463
+
+SQL> 
+
+
+select s.username, s.sid, s.serial#,t.xidusn, t.xidslot, t.xidsqn from v$session s, v$transaction t where s.taddr=t.addr ;
+
+—————————————
+
+DPS_USER object is locked by ACOREUSR1 user. Please find the below session details.
+SQL> select OBJECT_ID,owner,object_name,object_type,status from dba_objects where object_name=upper('dps_user');
+OBJECT_ID OWNER OBJECT_NAME OBJECT_TYPE STATUS ---------- --------------- ------------------------- ------------------- ------- 47996 ATGCORE DPS_USER TABLE VALID
+SQL> select ORACLE_USERNAME,PROCESS,LOCKED_MODE,SESSION_ID,OBJECT_ID,INST_ID from GV$LOCKED_OBJECT where OBJECT_ID=47996;
+ORACLE_USERNAME PROCESS LOCKED_MODE SESSION_ID OBJECT_ID INST_ID ------------------------------ ------------------------ ----------- ---------- ---------- ---------- ACOREUSR1 1234 3 3177 47996 3 ACOREUSR1 1234 3 9135 47996 3 ACOREUSR1 1234 3 9353 47996 3 ACOREUSR1 1234 3 20353 47996 3 ACOREUSR1 1234 3 20445 47996 3 ACOREUSR1 1234 3 21978 47996 3 ACOREUSR1 1234 3 27460 47996 3
+
+
+
+
+
+In grid home to get DB unique name
+
+crsctl stat res -t | grep  (service name)
+
+
+INACTIVE SESSION
+
+ SET PAGESIZE 300;
+ SET LINESIZE 200;
+
+SELECT 'ALTER SYSTEM KILL SESSION '''||sid||','||serial#||''' IMMEDIATE;' FROM v$session where status='INACTIVE' and username='ANT'; 
+
+ select count(*) from v$session where status='INACTIVE'; 
+
+select count(*) from gv$session where status='ACTIVE' and SERVICE_NAME <> 'SYS$BACKGROUND'; 
+
+select count(*) from gv$session where status='INACTIVE' and SERVICE_NAME <> 'SYS$BACKGROUND';   
+
+
+Select  sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from gv$session where status='INACTIVE' and SERVICE_NAME <> 'SYS$BACKGROUND';  
+
+Select  sid,serial#,status,machine,PROGRAM,username,osuser,sql_id,logon_time,service_name from gv$session where status='ACTIVE' and SERVICE_NAME <> 'SYS$BACKGROUND';  
+
+———————————
+
+OS process killing :
+
+Kill -9  16660 
+
+———————————
+
+RESOURCE LIMIT
+
+select resource_name,current_utilization,max_utilization,limit_value from v$resource_limit where resource_name in ('sessions', 'processes');
+
+select resource_name,current_utilization,max_utilization,limit_value from gv$resource_limit where resource_name in ('sessions', 'processes');
+
+
+
+select count(*) from gv$session where status='ACTIVE' and SERVICE_NAME = 'SYS$BACKGROUND';  
+
+
+select sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from v$session where status='ACTIVE' and SERVICE_NAME <> 'SYS$BACKGROUND';
+
+
+
+ ALTER TABLESPACE TEMP ADD TEMPFILE  SIZE 1G AUTOEXTEND ON  maxsize 30720M;
+
+select  INST_ID,MACHINE ,count(1) count from gv$session where schemaname='LMDE' group by INST_ID,MACHINE ;
+
+select  INST_ID,MACHINE ,count(1) count from gv$session where username='LMDE' group by INST_ID,MACHINE ;
+
+SET PAGESIZE 1000
+
+SELECT machine,
+       NVL(active_count, 0) AS active,
+       NVL(inactive_count, 0) AS inactive,
+       NVL(killed_count, 0) AS killed 
+FROM   (SELECT machine, status, count(*) AS quantity
+        FROM   gv$session
+        GROUP BY machine, status)
+PIVOT  (SUM(quantity) AS count FOR (status) IN ('ACTIVE' AS active, 'INACTIVE' AS inactive, 'KILLED' AS killed))
+ORDER BY machine;
+
+SET PAGESIZE 14
+
+
+Index space check :
+
+select a.owner, a.index_name, b.file_name  from dba_indexes a, dba_data_files b  where a.tablespace_name=b.tablespace_name and a.index_name=
+
+
+jdbc:oracle:thin:@
+
+(DESCRIPTION=(LOAD_BALANCE=off)(ADDRESS=(PROTOCOL=TCP)(HOST=dfw-us-scan-qa2.qa.walmart.com) (PORT=31290))(CONNECT_DATA=(SERVICE_NAME=mx11dbq2_app_qa2.gecwalmart.com)))
+
+(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = cdc-ep02-scan.prod.walmart.com)(PORT = 61290))(CONNECT_DATA =(SERVICE_NAME = cncatgxp_ro.gecwalmart.com)))
+
+
+Killing session:
+
+ALTER SYSTEM KILL SESSION
+The basic syntax for killing a session is shown below.
+SQL> ALTER SYSTEM KILL SESSION 'sid,serial#';
+
+In a RAC environment, you optionally specify the INST_ID, shown when querying the GV$SESSION view. This allows you to kill a session on different RAC node.
+
+SQL> ALTER SYSTEM KILL SESSION 'sid,serial#,@inst_id';
+
+The KILL SESSION command doesn't actually kill the session. It merely asks the session to kill itself. In some situations, like waiting for a reply from a remote database or rolling back transactions, the session will not kill itself immediately and will wait for the current operation to complete. In these cases the session will have a status of "marked for kill". It will then be killed as soon as possible.
+In addition to the syntax described above, you can add the IMMEDIATE clause.
+
+SQL> ALTER SYSTEM KILL SESSION 'sid,serial#' IMMEDIATE;
+
+This does not affect the work performed by the command, but it returns control back to the current session immediately, rather than waiting for confirmation of the kill.
+If the marked session persists for some time you may consider killing the process at the operating system level. Before doing this it's worth checking to see if it is performing a rollback. You can do this by running this script (session_undo.sql). If the USED_UREC value is decreasing for the session in question you should leave it to complete the rollback rather than killing the session at the operating system level.
+————————————————————————————————————————— 
+
+select 'alter system kill session '''||SID||','||serial#||','||'@'||inst_id||''' immediate;' from gv$session where sql_id='&sql_id';
+
+To check the sql text:
+
+select sql_id,sql_text from gv$sqlarea where sql_id=‘favxkc23xv42q'; 
+—————————————————————————————————————————
+
+select 'alter system kill session '''||SID||','||serial#||''' immediate;' from v$session;
+
+ select 'alter system kill session '''||SID||','||serial#||''' immediate;' from v$session where status=‘ACTIVE’ SERVICE_NAME <> 'SYS$BACKGROUND';
+
+Select  sid,serial#,status,machine,osuser,sql_id,logon_time,service_name from v$session where status=INACTIVE SERVICE_NAME <> 'SYS$BACKGROUND';
+
+
+select 'alter system kill session '''||SID||','||serial#||','||'@'||inst_id||''' immediate;' from gv$session where status='INACTIVE' and SERVICE_NAME <> 'SYS$BACKGROUND';
+
+
+
+
+NAGIOS:
+
+
+http://dfw-mon4.prod.walmart.com:3000/dashboard/db/oracle-operational-metrics?refresh=30s&orgId=8
+
+
+User id : dba
+Password : welcome1
+
+————————
+
+
+Outstanding oracle overview:
+
+ noc/noc
+
+OBJECT count
+
+
+SELECT COUNT ( * ) invalid_objects  , OBJECT_TYPE FROM dba_objects  WHERE owner  in('TPUCL','OPT_TOOL','OPT_ARCH','TPOBL') AND status = 'INVALID' group by OBJECT_TYPE;
+
+SELECT COUNT ( * ) invalid_objects  , OBJECT_TYPE FROM dba_objects  WHERE owner  in('JDATM_CRP','JDATM_AC','JDATM_FA','JDATM_CEA') AND status = 'INVALID' group by OBJECT_TYPE;
+
+SELECT COUNT ( * ) object_count  , OBJECT_TYPE FROM dba_objects  WHERE owner in('JDATM_CRP','JDATM_AC','JDATM_FA','JDATM_CEA')  AND status = 'VALID' group by OBJECT_TYPE;
+
+SELECT COUNT ( * ) object_count  , OBJECT_TYPE FROM dba_objects  WHERE owner in('JDATM_CRP','JDATM_AC','JDATM_FA','JDATM_CEA')  group by OBJECT_TYPE;
+
+38050
+
+ delete archivelog until sequence 38050 ;
+
+
+
+
+   ALTER USER "TPOBL" IDENTIFIED BY VALUES 'S:824E4556EFBCC4977C22464CD958210C2984C6F520827C6BBF7354DF68A3;49D00F8E4EC01FA0';
+
+   ALTER USER "TPUCL" IDENTIFIED BY VALUES 'S:90316F1D9F0030666D3A62FD030141E79E5CB945A37DF39EB452EACDBF4D;AFD59AAA720FBE64'
+      ;
+
+
+   ALTER USER "OPT_TOOL" IDENTIFIED BY VALUES 'S:25E84F5B43F1708CE64FDB6F43EEDF28C036B590500210A3BA95CFE9161A;AD94EB1FC4F477F0'
+      ;
+
+   ALTER USER "OPT_ARCH" IDENTIFIED BY VALUES 'S:41789D7FF4BA2B208773B6C8FD3FBF4C9397BB6E3676D72A30BC213A93CD;76CBA962CB6A600C'
+      ;
+
+
+
+Oracle Access steps:
+
+Syntax :  ssh userid@dbname
+Normal Example :ssh v0b01g1@cdc-eq01dbadm01.qa.walmart.com
+Balabit Example: ssh v0b01g1@cdc-eq01dbadm01.qa.walmart.com@ssh-balabit-cdc.prod.walmart.com
+
+ssh v0b01g1@dfw-ep05-scan.prod.walmart.com@ssh-balabit-cdc.prod.walmart.com
+
+v0b01g1@m-c02d2blzmd6n ~ % ssh v0b01g1@cdc-eq01dbadm01.qa.walmart.com
+v0b01g1@cdc-eq01dbadm01.qa.walmart.com's password: 
+Last login: Thu Nov 12 04:24:11 2020 from 172.28.243.24
+-bash: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+
+[v0b01g1@cdc-eq01dbadm01 ~]$ hostname
+cdc-eq01dbadm01.qa.walmart.com
+
+Login on Oracle account : dzdo su - oracledb
+Example:
+[v0b01g1@cdc-eq01dbadm01 ~]$ dzdo su - oracledb
+
+Listing DB using PMON: ps -ef | grep pmon
+Example:
+@cdc-eq01dbadm01.qa.walmart.com:/u01/app/oracle> ps -ef | grep pmon
+grid   103142   1 0 Sep10 ?    00:06:48 asm_pmon_+ASM1
+grid   105365   1 0 Sep10 ?    00:06:12 apx_pmon_+APX1
+oracledb 105521   1 0 Sep10 ?    00:12:25 ora_pmon_uss1xoa11
+oracledb 105522   1 0 Sep10 ?    00:12:19 ora_pmon_us2crta11
+oracledb 105523   1 0 Sep10 ?    00:12:19 ora_pmon_uss2xoa11
+oracledb 105524   1 0 Sep10 ?    00:12:50 ora_pmon_usacrta11
+oracledb 105525   1 0 Sep10 ?    00:15:47 ora_pmon_us1crta11
+oracledb 105526   1 0 Sep10 ?    00:10:22 ora_pmon_us2sct11
+oracledb 105528   1 0 Sep10 ?    00:12:31 ora_pmon_us1tctt11
+oracledb 105546   1 0 Sep10 ?    00:09:56 ora_pmon_us4crta11
+oracledb 105547   1 0 Sep10 ?    00:12:17 ora_pmon_us3crta11
+oracledb 105548   1 0 Sep10 ?    00:12:29 ora_pmon_usaxoa11
+oracledb 105556   1 0 Sep10 ?    00:16:04 ora_pmon_scyanq11
+oracledb 105558   1 0 Sep10 ?    00:10:02 ora_pmon_uss3xoa11
+oracledb 105564   1 0 Sep10 ?    00:09:58 ora_pmon_uss4xoa11
+oracledb 105566   1 0 Sep10 ?    00:13:16 ora_pmon_IDC1TSTQ1
+oracledb 105568   1 0 Sep10 ?    00:13:39 ora_pmon_us1sct11
+oracledb 105573   1 0 Sep10 ?    017          ora_pmon_us2omsa11
+oracledb 105580   1 0 Sep10 ?    00:12:24 ora_pmon_usimst11
+oracledb 107132   1 0 Sep10 ?    00:25:11 ora_pmon_IDC2TSTQ1
+oracledb 107224   1 0 Sep10 ?    00:18:45 ora_pmon_usomsa11
+oracledb 108551   1 0 Sep10 ?    00:08:13 ora_pmon_plmigrq11
+oracledb 108552   1 0 Sep10 ?    00:12:51 ora_pmon_uspltsa11
+oracledb 327638   1 0 Sep27 ?    0047     ora_pmon_us3sct11
+oracledb 385675 383408 0 04:36 pts/3  00:00:00 grep pmon
+
+Setting Oracle environment :
+@cdc-eq01dbadm01.qa.walmart.com:/u01/app/oracle> . oraenv
+
+Need to mention DB schema name which from pmon list:
+ORACLE_SID = [oracledb] ? scyanq11
+The Oracle base has been set to /u01/app/oracle/dbbase
+
+DB home path navigation : as
+Example : scyanq11@cdc-eq01dbadm01.qa.walmart.com:/u01/app/oracle> as 
+
+Connect with sysdba:
+scyanq11@cdc-eq01dbadm01.qa.walmart.com:/u01/app/oracle/dba/sql> s
+
+SQL*Plus: Release 12.1.0.2.0 Production on Thu Nov 12 04:38:48 2020
+
+Copyright (c) 1982, 2014, Oracle. All rights reserved.
+
+
+Connected to:
+Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+
+TO Exit:
+SQL> exit
+Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options‪ (edited) ‬
+
+
+
+
+ORACLE CRQ:
+
+
+To create a change, follow below steps:
+1. Create a change control on ServiceNow using the link:- https://wmlink/CHG4U or https://walmartglobal.service-now.com/
+2. Within the change create a task for -> OPS - DBA - Oracle - L2
+3. Add our group to the Group Approver list -> OPS - DBA - Oracle - L3
+When opening a Service Now change control, keep the following in mind:
+· Please allow sufficient lead time (3-5 business days) to allow for plan generation and approval gathering.(Pls make sure to plan the change out at least 72 hours if possible.)
+· Please plan a sufficient implementation window (between Planned Start Date and Planned End Date) to allow for implementation and back-out, if required.
+Here's a sample CRQ for your reference - CHG1844052
+Let me know the change number once you create it.
+
+Need below details in the description of the change (i.e under DBA CTASK).
+
+What is the change ?
+What is the blast radius? (down and up stream)
+What is the business justification?
+What are the critical considerations, timing, dependencies, problem resolution, security, etc.?
+What is the risk of doing without?
+What is the risk mitigation or contingency plan such as verified back-up, failover, rollback?
+How will the effectiveness be monitored and measured?
+Who will be monitoring and reporting change outcome?
+Have downstream systems and customers been notified and in agreement?
+Is this change already certified in non-prod ?
+Please add Balram Lodhi and Satyanarayana Gvv as approvers too (mandatory for any change which we are executing) as an approver.
+
+
+
+
+To create a change, follow below steps:
+	1. Create a change control on ServiceNow using the link:- https://wmlink/CHG4U or https://walmartglobal.service-now.com/
+	2. Within the change create a task for -> OPS - DBA - Oracle - L2
+	3. Add our group to the Group Approver list -> OPS - DBA - Oracle - L3
+	When opening a Service Now change control, keep the following in mind:
+	· Please allow sufficient lead time (3 business days) to allow for plan generation and approval gathering.
+	· Please plan a sufficient implementation window (between Planned Start Date and Planned End Date) to allow for implementation and backout, if required.
+	Here's a sample CRQ for your reference - CHG1630669
+	Let me know the change number once you create it. 
+
+
+Oracle Gateway access
+
+
+Non PCI
+
+ ssh v0b01g1@cdc-mx-scan-pr1.prod.walmart.com@prodgw-balabit-cdc.walmart.com
+
+
+
+PCI :
+
+ssh v0b01g1@dfw-us-scan-pr53.prod.walmart.com@pcigw-balabit-dfw.walmart.com
+
+
+Balabit gateways
+PCI
+
+pcigw-balabit-cdc.walmart.com
+pcigw-balabit-dfw.walmart.com
+
+Non-PCI
+prodgw-balabit-cdc.walmart.com
+prodgw-balabit-dfw.walmart.com
+
+
+As per the purging policy ,scheduled  job runs every Wednesday and checks for the partitions which were created 15 days before and drops the same from DB level.
+
+Note:
+Recent successful Execution :- 16th Dec 2020.
+
+
+ ssh v0b01g1@dfw-us-vpr2-r56.prod.walmart.com@pcigw-balabit-dfw.walmart.com
+
+
+select a.FILE_NAME,a.BYTES/1024/1024/1024 SIZE_GB,b.CREATION_TIME,a.TABLESPACE_NAME,a.AUTOEXTENSIBLE from dba_data_files a,v$datafile b where a.FILE_ID=b.FILE# and a.TABLESPACE_NAME='&tablespace' order by CREATION_TIME;
+
+Oracle jira
+
+https://jira.walmart.com/servicedesk/customer/portal/2882
+
+
+Oracle performance tuning.
+
+To check execution plan history :
+
+select /*+ parallel (32) */  sql_plan_hash_value,sql_full_plan_hash_value,trunc(sample_time) from DBA_HIST_ACTIVE_SESS_HISTORY  where sql_id = '35c966fkja6mz'  group by sql_plan_hash_value,sql_full_plan_hash_value,trunc(sample_time) order by trunc(sample_time) DESC ;
+
+
+select sql_plan_hash_value,sql_full_plan_hash_value,trunc(sample_time) from DBA_HIST_ACTIVE_SESS_HISTORY  where sql_id = '35c966fkja6mz'  group by sql_plan_hash_value,sql_full_plan_hash_value,trunc(sample_time) order by trunc(sample_time) DESC ;
+
+ Advisor report for SQL ID:
+
+
+SQL> @?/rdbms/admin/sqltrpt.sql
+
+Specify the Sql id
+~~~~~~~~~~~~~~~~~~
+Enter value for sqlid: a39j62pdqa51t----> enter the suspected SqlID
+
+Sql Id specified: a39j62pdqa51t
+
+Select sql_id,sql_text from gv$sqlarea where sql_id=
+
+ select address, hash_value from gv$sqlarea where sql_id='d538akr0d69u6';
+
+————————————
+
+
+Tools/sqlt/utl
+
+coe_gen_sql_profile
+
+coe_xfr_sql_profile
+
+v$sql
+
+coe_load_sql_profile.sql —— for when sql id change and app team wants to have same old sql id and  old hash plan
+
+coe_load_sql_profile.sql new solid  old solid old planhash
+
+Use  conn dba1/Fau6t8#2 —— should not run with sys account
+
+——————————————
+
+/u/users/oracle/tools/sqlt/utl
+
+coe_gen_sql_profile.sql. (can be run as sys user)
+
+sql_id / phv
+
+coe_load_sql_profile.sql  (should be run as any user with DBA privilege but not SYS)
+
+new sql_id / old_sql_id / old sql's better plan
+
+———————————————
+
+To find the history of Query (Last time execution time)
+
+SQL> 
+
+col Begin_interval_time format a30
+col end_interval_time format a30
+set lines 200 pages 70
+select Begin_interval_time, sql_id,plan_hash_value,  ROWS_PROCESSED_DELTA/EXECUTIONS_DELTA “Rows processed(Delta)“, (ELAPSED_TIME_DELTA/EXECUTIONS_DELTA/1/1) “Elapsed time per Exec(Delta)” , EXECUTIONS_DELTA FROM dba_hist_sqlstat a,dba_hist_snapshot b where a.snap_id=b.snap_id AND sql_id='&sqlid' and Executions_delta > 0 order by 1,2 ;
+
+
+———————————
+
+select a.instance_number inst_id, a.snap_id,a.plan_hash_value, to_char(begin_interval_time,'dd-mon-yy hh24:mi') btime, abs(extract(minute from (end_interval_time-begin_interval_time)) + extract(hour from (end_interval_time-begin_interval_time))*60 + extract(day from (end_interval_time-begin_interval_time))*24*60) minutes,
+executions_delta executions, round(ELAPSED_TIME_delta/1000000/greatest(executions_delta,1),4) "avg duration (sec)" from dba_hist_SQLSTAT a, dba_hist_snapshot b
+where sql_id='&sql_id' and a.snap_id=b.snap_id
+and a.instance_number=b.instance_number
+order by snap_id desc, a.instance_number;
+———————————————————
+
+@sqltrend.sql
+
+ select SQL_TEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like ‘INSERT INTO YFS_ORDER_AUDIT_DETAIL(ORDER_AUDIT_DETAIL_KEY,ORDER_AUDIT_KEY%’ order by LAST_ACTIVE_TIME;
+
+ select SQL_TEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like ‘select this_.SETTLEMENT_ID as SETTLEMENT_ID1_12_1%’ order by LAST_ACTIVE_TIME;
+
+ SELECT * FROM table(DBMS_XPLAN.DISPLAY_AWR(‘anx45gwx6c8qk’));
+
+———————————
+
+select distinct SQL_ID,PLAN_HASH_VALUE,to_char(TIMESTAMP,'dd-mon-yyyy hh24:mi:ss') from dba_hist_sql_plan where sql_id='03pdb4d47ravc';
+
+Existing Sql profile :
+
+select sql_id,sql_profile,sql_plan_baseline,hash_value,executions from v$sql where sql_id='ba59hww0n4nnc';
+
+——————————
+
+DECLARE
+l_sql_tune_task_id VARCHAR2(100);
+BEGIN
+l_sql_tune_task_id := DBMS_SQLTUNE.create_tuning_task (
+sql_id => 'ba59hww0n4nnc',
+scope => DBMS_SQLTUNE.scope_comprehensive,
+time_limit => 500,
+task_name => 'ba59hww0n4nnc_tuning_task11',
+description => 'Tuning task1 for statement ba59hww0n4nnc);
+DBMS_OUTPUT.put_line('l_sql_tune_task_id: ' || l_sql_tune_task_id);
+END;
+/
+
+
+——————————
+
+
+
+
+
+
+
+
+
+DECLARE
+  l_sql_tune_task_id  VARCHAR2 (100);
+BEGIN
+  l_sql_tune_task_id := DBMS_SQLTUNE.create_tuning_task (
+                          begin_snap  => 360134,
+                          end_snap    => 360135,
+                          sql_id      => '195krbb3quhu0',
+                          scope       => DBMS_SQLTUNE.scope_comprehensive,
+                          time_limit  => 60,
+                          task_name   => '195krbb3quhu0_AWR_tuning_task',
+                          description => 'Tuning task for statement 195krbb3quhu0  in AWR');
+  DBMS_OUTPUT.put_line('l_sql_tune_task_id: ' || l_sql_tune_task_id);
+END;
+/
+
+
+
+DECLARE
+  l_sql_tune_task_id  VARCHAR2(100);
+BEGIN
+  l_sql_tune_task_id := DBMS_SQLTUNE.create_tuning_task (
+                          begin_snap  => 359362,
+                          end_snap    => 359474,
+                          sql_id      => '195krbb3quhu0',
+                          scope       => DBMS_SQLTUNE.scope_comprehensive,
+                          time_limit  => 60,
+                          task_name   => '195krbb3quhu0_AWR_tuning_task',
+                          description => 'Tuning task for statement 195krbb3quhu0  in AWR’);
+  DBMS_OUTPUT.put_line('l_sql_tune_task_id: ' || l_sql_tune_task_id);
+END;
+/
+
+
+OUTPUT Set for sql:
+
+
+SET ECHO OFF
+SET SERVEROUTPUT ON SIZE 1000000
+SET PAGESIZE 999
+SET LINESIZE 132
+
+
+select * from v$resource_limit where RESOURCE_NAME in ('sessions','processes','transactions');
+
+RESOURCE_NAME		       CURRENT_UTILIZATION MAX_UTILIZATION INITIAL_ALLOCATION
+------------------------------ ------------------- --------------- ----------------------------------------
+LIMIT_VALUE				     CON_ID
+---------------------------------------- ----------
+processes				       834	       835	 1000
+      1000					  0
+
+sessions				       271	       272	 1584
+      1584					  0
+
+transactions					 0		 0	 1742
+ UNLIMITED					  0
+
+
+
+
+Password reset for schema
+
+
+ select dbms_metadata.get_ddl('USER','LMS_APP')from dual;
+
+DBMS_METADATA.GET_DDL('USER','LMS_APP')
+--------------------------------------------------------------------------------
+
+   CREATE USER "LMS_APP" IDENTIFIED BY VALUES 'S:057577C6B6A781879D21063AE56874
+
+
+Alter user username identified by password;
+
+
+
+
+
+PCI UNLOCK
+
+
+Service "usapayp1_plc_akgi.gecwalmart.com" has 1 instance(s).
+  Instance "usapayp12", status READY, has 1 handler(s) for this service...
+
+Connected to:
+Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+usapayp12
+
+SQL> select username,account_status from dba_users where username in ('PLC_AKGI_APP1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_AKGI_APP1
+LOCKED
+
+
+SQL> alter user PLC_AKGI_APP1 account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('PLC_AKGI_APP1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_AKGI_APP1
+OPEN
+
+
+
+————————————
+
+PLC_APP1@dfw-us-scan-pr56.prod.walmart.com:61290/us1payp1_plc.gecwalmart.com
+PLC_READONLY1@dfw-us-scan-pr56.prod.walmart.com:61290/us1payp1_plc.gecwalmart.com
+
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+us1payp12
+
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+LOCKED
+
+PLC_READONLY1
+LOCKED
+
+
+SQL> alter user account PLC_APP1 unlock;
+alter user account PLC_APP1 unlock
+                   *
+ERROR at line 1:
+ORA-00922: missing or invalid option
+
+
+SQL> alter user PLC_APP1 account unlock;
+
+User altered.
+
+SQL> alter user PLC_READONLY1 account unlock;
+
+User altered.
+
+SQL> 
+
+——————————————
+
+PLC_APP1@dfw-us-scan-pr56.prod.walmart.com:61290/us3payp1_plc.gecwalmart.com
+PLC_READONLY1@dfw-us-scan-pr56.prod.walmart.com:61290/us3payp1_plc.gecwalmart.com
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+us3payp12
+
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+LOCKED
+
+PLC_READONLY1
+LOCKED
+
+
+SQL> alter user PLC_APP1 account unlock;
+
+User altered.
+
+SQL> lter user PLC_READONLY1 account unlock;
+SP2-0734: unknown command beginning "lter user ..." - rest of line ignored.
+SQL> a^?
+  1* alter user PLC_APP1 account unlock
+SQL> 
+SQL> 
+SQL> alter user PLC_READONLY1 account unlock;
+
+User altered.
+
+SQL> 
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+OPEN
+
+PLC_READONLY1
+OPEN
+
+
+
+———————————————————
+
+PLC_APP1@dfw-us-scan-pr53.prod.walmart.com:61290/us2payp1_plc.gecwalmart.com
+PLC_READONLY1@dfw-us-scan-pr53.prod.walmart.com:61290/us2payp1_plc.gecwalmart.com
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+us2payp11
+
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+LOCKED
+
+PLC_READONLY1
+LOCKED
+
+
+SQL> alter user PLC_APP1 account unlock;
+
+User altered.
+
+SQL> alter user PLC_READONLY1 account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+OPEN
+
+PLC_READONLY1
+OPEN
+
+
+—————————————————————
+
+PLC_APP1@dfw-us-scan-pr53.prod.walmart.com:61290/us4payp1_plc.gecwalmart.com
+PLC_READONLY1@dfw-us-scan-pr53.prod.walmart.com:61290/us4payp1_plc.gecwalmart.com
+
+
+select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+us4payp11
+
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+LOCKED
+
+PLC_READONLY1
+LOCKED
+
+
+SQL> alter user PLC_APP1 account unlock;
+
+User altered.
+
+SQL> alter user PLC_READONLY1 account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('PLC_APP1','PLC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PLC_APP1
+OPEN
+
+PLC_READONLY1
+OPEN
+
+
+SQL> 
+——————————
+
+PPC_APP1@cdc-us-scan-pr53.prod.walmart.com:61290/ukpayp1_ppc.gecwalmart.com
+PPC_READONLY1@cdc-us-scan-pr53.prod.walmart.com:61290/ukpayp1_ppc.gecwalmart.com
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+ukpayp12
+
+SQL> select username,account_status from dba_users where username in ('PPC_APP1','PPC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PPC_READONLY1
+LOCKED
+
+PPC_APP1
+LOCKED
+
+
+SQL> alter user PPC_READONLY1 account unlock;
+
+User altered.
+
+SQL> alter user PPC_APP1 account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('PPC_APP1','PPC_READONLY1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PPC_READONLY1
+OPEN
+
+PPC_APP1
+OPEN
+
+
+SQL> 
+
+————————————
+
+PSSNON_APP1@dfw-us-scan-pr52.prod.walmart.com:61290/uspayp1_pssnon.gecwalmart.com
+NONPLC_READONLY1@dfw-us-scan-pr52.prod.walmart.com:61290/uspayp1_nonplc.gecwalmart.com NONPLC_APP1@dfw-us-scan-pr52.prod.walmart.com:61290/uspayp1_nonplc.gecwalmart.com
+
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+uspayp11
+
+SQL> select username,account_status from dba_users where username in ('PSSNON_APP1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PSSNON_APP1
+LOCKED
+
+
+SQL> alter user PSSNON_APP1 account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('PSSNON_APP1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+PSSNON_APP1
+OPEN
+
+
+SQL> exit
+Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+You have new mail in /var/spool/mail/oracledb
+uspayp11@dfw-dbblx016a-05.prod.walmart.com:/u01/app/oracle> s
+
+SQL*Plus: Release 12.1.0.2.0 Production on Thu Feb 4 05:53:01 2021
+
+Copyright (c) 1982, 2014, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+uspayp11
+
+SQL> select username,account_status from dba_users where username in ('NONPLC_READONLY1','NONPLC_APP1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+NONPLC_READONLY1
+LOCKED
+
+NONPLC_APP1
+LOCKED
+
+
+SQL> alter user NONPLC_READONLY1 account unlock;
+
+User altered.
+
+SQL> alter user NONPLC_APP1 account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('NONPLC_READONLY1','NONPLC_APP1');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+NONPLC_READONLY1
+OPEN
+
+NONPLC_APP1
+OPEN
+
+——————————————————————
+
+SLC_APP@dfw-us-scan-pr54.prod.walmart.com:61290/usslcp1_slc.gecwalmart.com
+SLC_READONLY@dfw-us-scan-pr54.prod.walmart.com:61290/usslcp1_slc.gecwalmart.com
+
+
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+usslcp11
+
+SQL> select username,account_status from dba_users where username in ('SLC_APP','SLC_READONLY');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+SLC_APP
+LOCKED
+
+SLC_READONLY
+LOCKED
+
+
+SQL> alter user SLC_APP account unlock;
+
+User altered.
+
+SQL> alter user SLC_READONLY account unlock;
+
+User altered.
+
+SQL> select username,account_status from dba_users where username in ('SLC_APP','SLC_READONLY');
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS
+--------------------------------
+SLC_APP
+OPEN
+
+SLC_READONLY
+OPEN
+
+
+SQL> exit
+Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Advanced Analytics and Real Application Testing options
+You have new mail in /var/spool/mail/oracledb
+usslcp11@dfw-dbblx016a-07.prod.walmart.com:/u01/app/oracle> 
+
+
+
+Port 22 connection error
+
+
+Ambirsh kt
+
+Initialy, I had a hard time login in to server as most of the server given in Jira or connections string will not work with SSH. There are various format of server you will get from requestor but only few format will work with SSH in most of the cases.
+
+Below are various server format. All belong to same cluster/server
+
+ cdc-eq01dbadm01.qa.walmart.com    --// hostname
+ cdc-eq01-scan.qa.walmart.com      --// SCAN name
+ cdc-eq01db01-vip.qa.walmart.com   --// VIP name
+
+ out of above server format, only first one will work with SSH and rest will give below error.
+
+a0k04t8@m-c02d14pamd6n exachk % ssh cdc-eq01db01-vip.qa.walmart.com
+ssh: connect to host cdc-eq01db01-vip.qa.walmart.com port 22: Connection refused
+a0k04t8@m-c02d14pamd6n exachk %
+
+a0k04t8@m-c02d14pamd6n exachk % ssh cdc-eq01-scan.qa.walmart.com
+ssh: connect to host cdc-eq01-scan.qa.walmart.com port 22: Connection refused
+a0k04t8@m-c02d14pamd6n exachk % 
+a0k04t8@m-c02d14pamd6n exachk % 
+Below will work:
+
+a0k04t8@m-c02d14pamd6n exachk % ssh cdc-eq01dbadm01.qa.walmart.com      
+a0k04t8@cdc-eq01dbadm01.qa.walmart.com's password: 
+Last login: Thu Dec  3 14:36:11 2020 from 172.29.127.102
+-bash: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+[a0k04t8@cdc-eq01dbadm01 ~]$ 
+[a0k04t8@cdc-eq01dbadm01 ~]$ 
+
+ This is not case for all the cluster, in some cases SCAN will work but if didnt then convert from SCAN/VIP to hostname like below
+
+SCAN = cdc-eq01-scan.qa.walmart.com
+then 1st hostname will be : cdc-eq01  +  dbadm01  +  .qa.walmart.com   =  cdc-eq01dbadm01.qa.walmart.com
+
+VIP = cdc-eq01db01-vip.qa.walmart.com
+then 1st hostname will be : cdc-eq01db  +  adm01  +  .qa.walmart.com   =  cdc-eq01dbadm01.qa.walmart.com
+
+
+ From JDBC string like below
+
+ jdbc:oracle:thin:@cdc-eq01-scan.qa.walmart.com:61290/us1sct1_srv_usfms1db_transaction.gecwalmart.com
+
+here below are required info:
+
+ SCAN : cdc-eq01-scan.qa.walmart.com
+ Service : us1sct1_srv_usfms1db_transaction   --// first word before underscore is DB name i.e us1sct1 .. if this is not DB name then, get instance name using “lsnrctl status”. Here this service will be registered for the instance.
+
+
+Procedure script output:
+
+
+select name as package_name , text from dba_source where owner='MTEPWDATA' and type='PACKAGE BODY' and name=
+
+select text from dba_source where owner='MTEPWDATA' and type='PACKAGE BODY' and name=
+
+
+rm -rf /Users/v0b01g1/.ssh/known_hosts
+
+
+Rman backup :
+
+Backup sofar completed %:
+
+SELECT SID, SERIAL#, CONTEXT, SOFAR, TOTALWORK,
+ROUND (SOFAR/TOTALWORK*100, 2) "% COMPLETE"
+FROM V$SESSION_LONGOPS
+WHERE OPNAME LIKE 'RMAN%' AND OPNAME NOT LIKE '%aggregate%'
+AND TOTALWORK! = 0 AND SOFAR <> TOTALWORK;
+
+
+This script will report status of current as well as completed backup details like full, incremental and archivelog back
+ups:
+
+col STATUS format a9
+col hrs format 999.99
+select
+SESSION_KEY, INPUT_TYPE, STATUS,
+to_char(START_TIME,'mm/dd/yy hh24:mi') start_time,
+to_char(END_TIME,'mm/dd/yy hh24:mi')   end_time,
+elapsed_seconds/3600                   hrs
+from V$RMAN_BACKUP_JOB_DETAILS
+order by session_key;
+
+
+
+
+RMAN Backup check :
+
+Because netbackup team changed to ne BUNB, please validate all oracle dbs to see they work or not.
+If primary db, cd ~oracle/tmp/logs
+ls -ltr *ar* ==> find most recent archive backup log, to see completing without error or not
+ 
+If standby db, cd ~oracle/tmp/logs
+ls -ltr *backup ==> find out most recent full oracle backup to see completing without error or not.*
+
+
+
+
+select owner as "Schema" , segment_name as "Object Name" , segment_type as "Object Type" , round(bytes/1024/1024/1024,2) as "Object Size (GB)”, tablespace_name as "Tablespace" from dba_segments where segment_name in ('IX_SPC_POSITION','IX_SPC_PRODUCT','IX_SPC_PLANOGRAM') and owner='US_IKB';
+
+
+set time on set timing on
+prompt 'CDBD running below'
+select inst_id,name,open_mode,database_role from gv$database;
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS');
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS'); exec DBMS_STATS.EXPORT_FIXED_OBJECTS_STATS (stattab => 'BACKUP_DBA_FIXED_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.EXPORT_DICTIONARY_STATS (stattab => 'BACKUP_DICTIONARY_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM');
+EXEC DBMS_STATS.GATHER_DICTIONARY_STATS; EXEC DBMS_STATS.GATHER_FIXED_OBJECTS_STATS;
+alter session set nls_date_format='YYYY-Mon-DD'; col last_analyzed for a13 set termout off set trimspool off set feedback off
+prompt 'Statistics for SYS tables' SELECT NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) dictionary_tables FROM dba_tables WHERE owner = 'SYS' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+prompt 'Statistics for Fixed Objects' select NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) fixed_objects FROM dba_tab_statistics WHERE object_type = 'FIXED TABLE' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+prompt 'PDBD below for MXINTPPDBP1'
+alter session set container=MXINTPPDBP1;
+set time on set timing on
+select inst_id,name,open_mode,database_role from gv$database;
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS');
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS'); exec DBMS_STATS.EXPORT_FIXED_OBJECTS_STATS (stattab => 'BACKUP_DBA_FIXED_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.EXPORT_DICTIONARY_STATS (stattab => 'BACKUP_DICTIONARY_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM');
+EXEC DBMS_STATS.GATHER_DICTIONARY_STATS; EXEC DBMS_STATS.GATHER_FIXED_OBJECTS_STATS;
+alter session set nls_date_format='YYYY-Mon-DD'; col last_analyzed for a13 set termout off set trimspool off set feedback off
+prompt 'Statistics for SYS tables' SELECT NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) dictionary_tables FROM dba_tables WHERE owner = 'SYS' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+prompt 'Statistics for Fixed Objects' select NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) fixed_objects FROM dba_tab_statistics WHERE object_type = 'FIXED TABLE' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+spool off EOF
+
+
+Sql His for stress test
+
+
+col Begin_interval_time format a30
+col end_interval_time format a30
+set lines 200 pages 70
+select Begin_interval_time,
+sql_id,plan_hash_value, 
+ROWS_PROCESSED_DELTA/EXECUTIONS_DELTA “Rows processed(Delta)“,
+(ELAPSED_TIME_DELTA/EXECUTIONS_DELTA/1/1) “Elapsed time per Exec(Delta)” ,
+EXECUTIONS_DELTA
+FROM dba_hist_sqlstat a,dba_hist_snapshot b
+where a.snap_id=b.snap_id
+AND sql_id=‘ggxska0fv82vu’ and
+Executions_delta > 0
+order by 1,2 ;
+
+
+
+SQL id  execution history 
+
+
+select /*+ parallel (32) */
+sql_plan_hash_value,sql_full_plan_hash_value,trunc(sample_time) from DBA_HIST_ACTIVE_SESS_HISTORY 
+where sql_id = '9sdb77dfkmj7p' 
+group by sql_plan_hash_value,sql_full_plan_hash_value,trunc(sample_time)
+order by trunc(sample_time) desc;
+
+
+
+Sql text , execution history and hash plan 
+
+
+SQL TEXT:
+
+select sql_fulltext  from v$sql WHERE sql_id IN ('1d9hu37za7d8y');
+
+select SQL_FULLTEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like 'SELECT A.SLOT_ID AS SLOT_ID,--b.STOP_ID,%' order by LAST_ACTIVE_TIME;
+
+select SQL_FULLTEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like 'DELETE FROM STSC.UDT_SKU_PRES_SCENARIO WHERE SCEN%' order by LAST_ACTIVE_TIME;
+
+select SQL_ID,sql_fulltext from gv$sql WHERE sql_text LIKE 'SELECT /*+ INDEX(IX_SPC_PRODUCT ROWID) *%';
+
+——
+Ecom
+
+ select SQL_FULLTEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like 'SELECT A.SLOT_ID AS SLOT_ID,--b.STOP_ID,%' order by LAST_ACTIVE_TIME;
+——
+
+
+HASH PLAN CURRENT SESSION:
+
+set lines 300 pages 3000
+col BEGIN_INTERVAL_TIME for a23
+col PLAN_HASH_VALUE for 9999999999
+col date_time for a18
+col snap_id heading 'BEGIN|SNAPSHOT'
+col executions_delta heading "EXEC|DELTA"
+col parsing_schema_name for a25
+--col buffer_gets_delta heading "Buffer|Gets|DELTA"
+--col ccwait_delta heading "Cncr|WAIT|DELTA"
+--col cpu_time_delta heading "CPU|TIME|DELTA in Sec" for 99999.99
+--col elapsed_time_delta heading "Elpsd|TIME|DELTA in Sec" for 99999.99
+--col DISK_READS_DELTA heading "Disk|READS|DELTA"
+--col rows_processed_total heading "Rows|PROCESSED|TOTAL"
+col sql_profile heading "SQL|Profile" for a30
+--col BEGIN_INTERVAL_TIME heading "BEGIN|INTERVAL|TIME" for a14
+col date_time heading 'Date time'
+--col INSTANCE_NUMBER heading "n" for a2
+col avg_lio for 99999999999.99
+col avg_cputime for 9999999.99
+col avg_etime for 9999999.99
+col avg_pio for 99999999999.99
+col avg_row for 999999999999.99
+SELECT distinct
+--s.INSTANCE_NUMBER n,
+s.snap_id ,SQL.parsing_schema_name,
+--sql_id,
+PLAN_HASH_VALUE,
+--to_char(s.BEGIN_INTERVAL_TIME,'mm/dd/yy hh24:mi') BEGIN_INTERVAL_TIME,
+to_char(s.BEGIN_INTERVAL_TIME,'mm/dd/yy_hh24mi')|| to_char(s.END_INTERVAL_TIME,'_hh24mi') Date_Time,
+SQL.executions_delta,
+SQL.buffer_gets_delta/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_lio,
+--SQL.ccwait_delta,
+(SQL.cpu_time_delta/1000000)/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_cputime ,
+(SQL.elapsed_time_delta/1000000)/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_etime,
+SQL.DISK_READS_DELTA/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_pio,
+SQL.rows_processed_total/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_row,
+SQL.sql_profile
+FROM
+dba_hist_sqlstat SQL,
+dba_hist_snapshot s
+WHERE
+--s.instance_number in (1,2,3,4)
+--and 
+s.snap_id = SQL.snap_id and s.instance_number=sql.instance_number
+AND sql_id in
+('219s29n3t0bsw')
+order by 4
+/
+
+
+EXECUTION HISTORY:
+
+select sql_id, executions,ELAPSED_TIME/1000000 as ELAPSED_TIME_Sec,LAST_ACTIVE_TIME,HASH_VALUE,OLD_HASH_VALUE,PLAN_HASH_VALUE,ROWS_PROCESSED,OPTIMIZER_COST from v$sql where sql_id='bupxnc3u7vdb7' order by 4;
+
+
+select sql_id, plan_hash_value from v$sqlarea WHERE sql_id IN ('219s29n3t0bsw');
+
+select * from table(dbms_xplan.display_cursor('&sql_id',null,'ADVANCED'));
+
+
+
+
+
+Sql text :
+
+
+
+select SQL_FULLTEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like 'SELECT /*+ parallel (oh,4) parallel (ol,4) */%' order by LAST_ACTIVE_TIME;
+1:05
+select SQL_FULLTEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like 'DELETE FROM STSC.UDT_SKU_PRES_SCENARIO WHERE SCEN%' order by LAST_ACTIVE_TIME;
+1:06
+select SQL_ID,sql_fulltext from gv$sql WHERE sql_text LIKE 'SELECT /*+ INDEX(IX_SPC_PRODUCT ROWID) *%';
+
+
+
+select SQL_FULLTEXT,SQL_ID,LAST_ACTIVE_TIME from gv$sqlarea where SQL_FULLTEXT like 'SELECT from  wmsloadunittype lut %'  order by LAST_ACTIVE_TIME;
+
+
+i need query to check running sql hash plan
+
+Vikas [First Contact]
+ 
+  8:53 AM
+Ok
+8:54
+select sql_id, executions,ELAPSED_TIME/1000000 as ELAPSED_TIME_Sec,LAST_ACTIVE_TIME,HASH_VALUE,OLD_HASH_VALUE,PLAN_HASH_VALUE,ROWS_PROCESSED,OPTIMIZER_COST from v$sql where sql_id='bupxnc3u7vdb7' order by 4;
+
+Vishnu B
+ 
+  8:55 AM
+this gives running sql hash plan right
+
+Vikas [First Contact]
+ 
+  8:55 AM
+yes
+8:55
+select sql_id, plan_hash_value from v$sqlarea WHERE sql_id IN ('219s29n3t0bsw');
+
+Vishnu B
+ 
+  8:56 AM
+okay how to check history of sql id with hash plan
+
+Vikas [First Contact]
+ 
+  8:56 AM
+select * from table(dbms_xplan.display_cursor('&sql_id',null,'ADVANCED'));
+
+Vishnu B
+ 
+  8:57 AM
+okay
+
+Vikas [First Contact]
+ 
+  8:57 AM
+For history of SQL_ID (change SQL_ID in cmd)
+
+set lines 300 pages 3000
+col BEGIN_INTERVAL_TIME for a23
+col PLAN_HASH_VALUE for 9999999999
+col date_time for a18
+col snap_id heading 'BEGIN|SNAPSHOT'
+col executions_delta heading "EXEC|DELTA"
+col parsing_schema_name for a25
+--col buffer_gets_delta heading "Buffer|Gets|DELTA"
+--col ccwait_delta heading "Cncr|WAIT|DELTA"
+--col cpu_time_delta heading "CPU|TIME|DELTA in Sec" for 99999.99
+--col elapsed_time_delta heading "Elpsd|TIME|DELTA in Sec" for 99999.99
+--col DISK_READS_DELTA heading "Disk|READS|DELTA"
+--col rows_processed_total heading "Rows|PROCESSED|TOTAL"
+col sql_profile heading "SQL|Profile" for a30
+--col BEGIN_INTERVAL_TIME heading "BEGIN|INTERVAL|TIME" for a14
+col date_time heading 'Date time'
+--col INSTANCE_NUMBER heading "n" for a2
+col avg_lio for 99999999999.99
+col avg_cputime for 9999999.99
+col avg_etime for 9999999.99
+col avg_pio for 99999999999.99
+col avg_row for 999999999999.99
+SELECT distinct
+--s.INSTANCE_NUMBER n,
+s.snap_id ,SQL.parsing_schema_name,
+--sql_id,
+PLAN_HASH_VALUE,
+--to_char(s.BEGIN_INTERVAL_TIME,'mm/dd/yy hh24:mi') BEGIN_INTERVAL_TIME,
+to_char(s.BEGIN_INTERVAL_TIME,'mm/dd/yy_hh24mi')|| to_char(s.END_INTERVAL_TIME,'_hh24mi') Date_Time,
+SQL.executions_delta,
+SQL.buffer_gets_delta/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_lio,
+--SQL.ccwait_delta,
+(SQL.cpu_time_delta/1000000)/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_cputime ,
+(SQL.elapsed_time_delta/1000000)/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_etime,
+SQL.DISK_READS_DELTA/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_pio,
+SQL.rows_processed_total/decode(nvl(SQL.executions_delta,0),0,1,SQL.executions_delta) avg_row,
+SQL.sql_profile
+FROM
+dba_hist_sqlstat SQL,
+dba_hist_snapshot s
+WHERE
+--s.instance_number in (1,2,3,4)
+--and 
+s.snap_id = SQL.snap_id and s.instance_number=sql.instance_number
+AND sql_id in
+('219s29n3t0bsw')
+order by 4
+/
+
+
+
+Sql tunning
+
+cw.sql —— checks wait event
+
+Sa.sql——  checks session history
+
+Sqltrend— plan  check for sql id
+
+Blocker.sql— blocking
+
+As —— set home path
+
+Accept.sql ——— profile setting
+
+Waits — wait event
+
+———————————————————————
+To flush sga on sql id:
+
+Purge SQL Plan from memory :
+
+To check the plan hash value for sqlid:
+select ADDRESS, HASH_VALUE from V$SQLAREA where SQL_ID='251fjyn5fj84q';
+ADDRESS HASH_VALUE
+---------------- ------------------------
+
+00000005DGEC9DE0 257655674
+
+To clear :
+exec DBMS_SHARED_POOL.PURGE ('00000005DGEC9DE0, 257655674', 'C');
+
+
+ssh oracle@us07006r5300d0a.s07006.us.wal-mart.com
+
+ ssh oracle@us07006r5300d0b.s07006.us.wal-mart.com
+
+
+SQL> select instance_name from v$instance;
+
+INSTANCE_NAME
+----------------
+wo7006prd
+
+12:23
+SQL> shu immediate
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL>
+
+
+SRVCTL
+
+
+
+
+
+————————————————————
+Check service status running in node:
+
+
+us4romsp2@cdceq02dbadm02.qa.walmart.com:/u01/app/oracle/dba/sql> srvctl status service -d cdcxus4romsp(dbuniqe name)
+Service us4romsp_oms_ogg_shrd11 
+Service us4romsp_oms_ogg_shrd12 is running on instance(s) us4romsp3
+Service us4romsp_oms_rpt_shrd11 is running on instance(s) us4romsp2
+Service us4romsp_oms_rpt_shrd12 is running on instance(s) us4romsp3
+Service us4romsp_ops is running on instance(s) us4romsp2
+Service us4romsp_ro is not running.
+us4romsp2@cdce
+
+
+———————————————————
+
+
+check service name for the particular DB :
+usjirap21@dfw-dbblx016a-03.prod.walmart.com:/u01/app/oracle/dba/sql> srvctl config service -d dfwusjirap2 | grep ’instances\|Service name’;
+Service name: CONFLUENCE
+Preferred instances: usjirap21,usjirap22,usjirap23
+Available instances:
+Service name: CROWD
+
+Config check in DB:
+————————————
+
+Srvctl config service -d dynamo -s service name
+
+Relocate the service :
+————————————
+
+srvctl relocate service -d dfwmxsomsq1 -s srv_mxsomsq1_app.gecwalmart.com -i mxsomsq11 -t mxsomsq13
+
+Stale in table
+
+
+select table_name, stale_stats, last_analyzed  from dba_tab_statistics  where stale_stats='YES' and owner= 
+
+
+JDATM_CRP
+
+
+set timing on
+
+exec dbms_stats.gather_schema_stats(ownname=>'&schema_name', CASCADE=>TRUE,ESTIMATE_PERCENT=>dbms_stats.auto_sample_size,degree =>4);
+
+
+
+ tail -fn 200 /u/users/oracle/tmp/logs/gather_stats_tmsmprf1_tmsmprf1_service_2021021
+
+
+
+Standby check:
+COE_shiv
+
+
+ssh oracle@osei801c.wal-mart.com -c aes256-cbc —— primary db
+
+ssh oracle@osei801b -c aes256-cbc  ——— secondary db 
+
+To check DB role :
+
+SELECT DATABASE_ROLE, DB_UNIQUE_NAME INSTANCE, OPEN_MODE, PROTECTION_MODE, PROTECTION_LEVEL, SWITCHOVER_STATUS FROM V$DATABASE;
+
+SCN checks:
+
+col current_scn for 99999999999999999
+select current_scn from v$database;
+
+
+Check for LAG from V$DATAGUARD_STATS View :
+
+set linesize 9000
+column name format a25
+column value format a20
+column time_computed format a25
+SELECT name, value, time_computed FROM v$dataguard_stats;
+
+It is also possible to see whether Redo Logs are sent and applied to Standby correctly or not, by following the Sequence numbers:
+
+ select max(sequence#),thread# from v$archived_log group by thread#;
+
+The query below shows the latest archives on Primary and Standby. It shows the last archive produced in Primary and the last archive applied to Standby:
+
+SELECT a.resetlogs_id, DECODE (a.thread#, 1, 'node1', 2, 'node2') HOST, b.last_seq prmy_last_file, a.applied_seq stdby_last_file, CASE WHEN b.last_seq - a.applied_seq > 2 THEN '=>' ELSE to_char(b.last_seq - a.applied_seq) END archive_difference, TO_CHAR (a.latest_apply_time, 'dd/mm/yyyy hh24:mi:ss') stdby_latest_time FROM (SELECT   resetlogs_id, thread#, MAX (sequence#) applied_seq, MAX (next_time) latest_apply_time FROM v$archived_log WHERE applied = 'YES' GROUP BY resetlogs_id, thread#) a,(SELECT   resetlogs_id, thread#, MAX (sequence#) last_seq FROM v$archived_log GROUP BY resetlogs_id, thread#) WHERE a.thread# = b.thread# ORDER BY a.thread#;
+
+It can be seen if there is an error in the Alert Log from V$DATAGUARD_STATUS View. An alarm can be created by selecting the “Error” column in the Severity column here:
+
+column message format a66
+SELECT timestamp, facility, message FROM v$dataguard_status ORDER by timestamp;
+
+
+Alert Log location :
+
+select * from V$DIAG_INFO where name ='Diag Trace';
+
+oracle@osei801b:/u/oracle/server/diag/rdbms/grsprd1_db2/grsprd1/trace
+
+
+LAST SEQUENCE RECEIVED AND LAST SEQUENCE APPLIED:
+
+
+ SELECT al.thrd "Thread", almax "Last Seq Received", lhmax "Last Seq Applied" FROM
+(select thread# thrd, MAX(sequence#) almax FROM v$archived_log WHERE resetlogs_change#=(SELECT resetlogs_change# FROM v$database) GROUP BY thread#) al, (SELECT thread# thrd, MAX(sequence#) lhmax FROM v$log_history WHERE resetlogs_change#=(SELECT resetlogs_change# FROM v$database) GROUP BY thread#) lh WHERE al.thrd = lh.thrd; 
+
+Process:
+
+select process, thread#, sequence#, status from v$managed_standby ;
+
+
+Enable  :
+
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT  NODELAY
+
+
+ALTER DATABASE OPEN READ ONLY
+
+srvctl stop database -d grsprd1_db2
+
+srvctl stop database -d <db_unque_name> 
+srvctl start database -d <db_unque_name> -o mount
+
+
+
+Startup mount 
+
+Mount— > ctrl -> BG -> db will not be opened 
+
+—>> data dic
+
+Startup -> mount + db open
+
+Startup no mount —> 
+Alter database mount ->
+Alter database open
+
+Startup mount.
+Alter database open;
+
+Shu normal 
+Shu trask
+Shi immediate
+Shu abort
+
+
+
+
+Stats gather:
+
+
+
+
+update DBI_USER.DATABASE_DETAILS_PROD set MAINTENANCE_FLAG='YES' where LIVE_PRODUCTION='YES' and upper(DB_UNIQUE_NAME) in upper('cdcxussiamp1');
+update DBI_USER.DATABASE_DETAILS_PROD set MAINTENANCE_FLAG='YES' where LIVE_PRODUCTION='YES' and upper(DB_UNIQUE_NAME) in upper('cdcxusccmp1');
+
+
+
+
+update DBI_USER.DATABASE_DETAILS_PROD set MAINTENANCE_FLAG='NO' where LIVE_PRODUCTION='YES' and upper(DB_UNIQUE_NAME) in upper('edcxmxintpp1');
+update DBI_USER.DATABASE_DETAILS_PROD set MAINTENANCE_FLAG='NO' where LIVE_PRODUCTION='YES' and upper(DB_UNIQUE_NAME) in upper('edcxmxintpp1');
+
+
+Manual steps recheck:
+
+select DB_UNIQUE_NAME,STATS_STATE from DBI_USER.DATABASE_DETAILS_PROD where LIVE_PRODUCTION='YES' and upper(DB_UNIQUE_NAME) in upper('cdcxus3omsp1');
+
+Disable —> update DBI_USER.DATABASE_DETAILS_PROD set STATS_STATE='BLACKOUT' where LIVE_PRODUCTION='YES' and STATS_STATE='SCHEDULED' and upper(DB_UNIQUE_NAME) in upper('cdcxus3omsp1');
+
+update DBI_USER.DATABASE_DETAILS_PROD set STATS_STATE='SCHEDULED' where LIVE_PRODUCTION='YES' and STATS_STATE='BLACKOUT' and upper(DB_UNIQUE_NAME) in upper('cdcxus3omsp1');
+
+
+Status —> select DB_UNIQUE_NAME,STATS_STATE from DBI_USER.DATABASE_DETAILS_PROD where LIVE_PRODUCTION='YES' and upper(DB_UNIQUE_NAME) in upper('cdcxus1omsp1');
+
+Disable —> update DBI_USER.DATABASE_DETAILS_PROD set STATS_STATE='BLACKOUT' where LIVE_PRODUCTION='YES' and STATS_STATE='SCHEDULED' and upper(DB_UNIQUE_NAME) in upper('cdcxus1omsp1');
+
+Enable —> update DBI_USER.DATABASE_DETAILS_PROD set STATS_STATE='SCHEDULED' where LIVE_PRODUCTION='YES' and STATS_STATE='BLACKOUT' and upper(DB_UNIQUE_NAME) in upper('cdcxus1omsp1');
+
+
+———
+
+
+vi gather_fixed_dictionary_stats.sh
+#!/bin/ksh
+sqlplus / as sysdba <<eof spool gather_fixed_dictionary_stats_$ORACLE_SID.log !hostname @gather_fixed_dictionary_stats.sql exit eof /usr/bin/Mail -s "Gather Dictionary and Fixed Stats for $ORACLE_SID DB" vishnu.baskar@walmart.com < gather_fixed_dictionary_stats_$ORACLE_SID.log
+
+vi gather_fixed_dictionary_stats.sql
+
+set time on set timing on
+prompt 'CDBD running below'
+select inst_id,name,open_mode,database_role from gv$database;
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS');
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS'); exec DBMS_STATS.EXPORT_FIXED_OBJECTS_STATS (stattab => 'BACKUP_DBA_FIXED_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.EXPORT_DICTIONARY_STATS (stattab => 'BACKUP_DICTIONARY_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM');
+EXEC DBMS_STATS.GATHER_DICTIONARY_STATS; EXEC DBMS_STATS.GATHER_FIXED_OBJECTS_STATS;
+alter session set nls_date_format='YYYY-Mon-DD'; col last_analyzed for a13 set termout off set trimspool off set feedback off
+prompt 'Statistics for SYS tables' SELECT NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) dictionary_tables FROM dba_tables WHERE owner = 'SYS' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+prompt 'Statistics for Fixed Objects' select NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) fixed_objects FROM dba_tab_statistics WHERE object_type = 'FIXED TABLE' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+prompt 'PDBD below for MXINTPPDBP1'
+alter session set container=MXINTPPDBP1;
+set time on set timing on
+select inst_id,name,open_mode,database_role from gv$database;
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS');
+exec DBMS_STATS.DROP_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DBA_FIXED_STATS'); exec DBMS_STATS.EXPORT_FIXED_OBJECTS_STATS (stattab => 'BACKUP_DBA_FIXED_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM'); exec DBMS_STATS.CREATE_STAT_TABLE (ownname=>'SYSTEM', stattab => 'BACKUP_DICTIONARY_STATS'); exec DBMS_STATS.EXPORT_DICTIONARY_STATS (stattab => 'BACKUP_DICTIONARY_STATS', statid =>'Holiday_Prep', statown => 'SYSTEM');
+EXEC DBMS_STATS.GATHER_DICTIONARY_STATS; EXEC DBMS_STATS.GATHER_FIXED_OBJECTS_STATS;
+alter session set nls_date_format='YYYY-Mon-DD'; col last_analyzed for a13 set termout off set trimspool off set feedback off
+prompt 'Statistics for SYS tables' SELECT NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) dictionary_tables FROM dba_tables WHERE owner = 'SYS' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+prompt 'Statistics for Fixed Objects' select NVL(TO_CHAR(last_analyzed, 'YYYY-Mon-DD'), 'NO STATS') last_analyzed, COUNT(*) fixed_objects FROM dba_tab_statistics WHERE object_type = 'FIXED TABLE' GROUP BY TO_CHAR(last_analyzed, 'YYYY-Mon-DD') ORDER BY 1 DESC;
+spool off EOF
+
+Run script as :
+nohup sh gather_fixed_dictionary_stats.sh &
+
+
+Stats gathering for schema and table
+
+
+ exec dbms_stats.gather_schema_stats( ownname => 'GRSLOAD' , degree => 8, cascade => TRUE);
+
+ exec dbms_stats.gather_schema_stats( ownname => 'STSC' , degree => 8, cascade => TRUE);
+
+table:
+
+SELECT stattype_locked FROM dba_tab_statistics WHERE table_name = 'TEST' and owner = 'TECH';
+
+
+SQL> exec dbms_stats.unlock_table_stats('GRSLOAD','TMP_SF_BASE_FCST');
+
+PL/SQL procedure successfully completed.
+
+SQL> exec dbms_stats.gather_table_stats('GRSLOAD','TMP_SF_BASE_FCST');
+
+PL/SQL procedure successfully completed.
+
+SQL> exec dbms_stats.lock_table_stats('GRSLOAD','TMP_SF_BASE_FCST');
+
+PL/SQL procedure successfully completed.
+
+
+
+
+Stats status
+
+col STATTYPE_LOCKED for a20
+select distinct owner,
+    table_name, 
+    stale_stats,STATTYPE_LOCKED, 
+    last_analyzed
+from 
+    dba_tab_statistics
+ where 
+   --owner = 'STSC'  and 
+    --stale_stats ='YES'
+      table_name in ('SAMS_VENDOR_SHIP_LOCATION')
+order by 
+    last_analyzed desc, table_name asc
+;
+
+
+System stamp
+
+select CAST(systimestamp AS timestamp(0) with local time zone) as local_time,systimestamp as server_time from dual;
+
+
+Table lock
+
+
+select a.sid||'|'|| a.serial#||'|'|| a.process
+ from gv$session a, gv$locked_object b, dba_objects c
+ where b.object_id = c.object_id
+ and a.sid = b.session_id
+ and OBJECT_NAME=upper('&TABLE_NAME');
+
+
+
+Tablespace checking and adding 
+
+select tablespace_name from all_tables where owner='JDATM_CRP' and table_name='OP_AP_STATNST_T';
+
+
+
+alter tablespace '&tablespace_name' add datafile 
+
+
+alter tablespace  USERS add datafile +DATA size 10g autoextend on maxsize 31g;
+
+
+ALTER TABLESPACE UNDOTBS1 ADD DATAFILE  SIZE  31g;
+
+Temp usage:
+
+SELECT A.tablespace_name tablespace, D.mb_total,
+    SUM (A.used_blocks * D.block_size) / 1024 / 1024 mb_used,
+    D.mb_total - SUM (A.used_blocks * D.block_size) / 1024 / 1024 mb_free
+   FROM v$sort_segment A,
+    (SELECT B.name, C.block_size, SUM (C.bytes) / 1024 / 1024 mb_total
+    FROM v$tablespace B, v$tempfile C
+     WHERE B.ts#= C.ts#
+      GROUP BY B.name, C.block_size) D
+    WHERE A.tablespace_name = D.name
+    GROUP by A.tablespace_name, D.mb_total;
+
+
+To see top 10 consuming process :
+---------------------------------
+
+select * from
+(SELECT d.tablespace_name,a.sid,a.serial#,a.program,a.module,a.action,a.username "DB Username",a.osuser,ROUND((b.blocks*d.block_size)/1024/1024,2) "Used MB",c.sql_text
+FROM v$session a, v$tempseg_usage b, v$sqlarea c,dba_tablespaces d
+WHERE a.saddr = b.session_addr AND c.address= a.sql_address AND c.hash_value = a.sql_hash_value AND d.tablespace_name=b.tablespace ORDER BY b.tablespace, b.blocks DESC)
+where rownum <=10
+
+
+
+TEMP USAGE:
+
+
+SELECT   S.sid || ',' || S.serial# sid_serial, S.username, S.osuser, P.spid, S.module,
+          P.program, SUM (T.blocks) * TBS.block_size / 1024 / 1024 mb_used, T.tablespace,
+          COUNT(*) statements
+ FROM     v$sort_usage T, v$session S, dba_tablespaces TBS, v$process P
+ WHERE    T.session_addr = S.saddr
+ AND      S.paddr = P.addr
+ AND      T.tablespace = TBS.tablespace_name
+ GROUP BY S.sid, S.serial#, S.username, S.osuser, P.spid, S.module,
+          P.program, TBS.block_size, T.tablespace
+ ORDER BY sid_serial;
+
+
+———————————————————————————————————————————————————
+
+DB temp used and free
+
+select a.tablespace_name tablespace,
+d.TEMP_TOTAL_MB,
+sum (a.used_blocks * d.block_size) / 1024 / 1024 TEMP_USED_MB,
+d.TEMP_TOTAL_MB - sum (a.used_blocks * d.block_size) / 1024 / 1024 TEMP_FREE_MB
+from v$sort_segment a,
+(
+select b.name, c.block_size, sum (c.bytes) / 1024 / 1024 TEMP_TOTAL_MB
+from v$tablespace b, v$tempfile c
+where b.ts#= c.ts#
+group by b.name, c.block_size
+) d
+where a.tablespace_name = d.name
+group by a.tablespace_name, d.TEMP_TOTAL_MB;
+
+
+
+UNDOTBS
+
+select a.tablespace_name, round(assigned_space) "ALLOCATED (MB)", round((nvl(free_space,0) + INCRM)) "FREE (MB)", 
+round((assigned_space - nvl(free_space,0) - INCRM)) "USED (MB)",
+round( ((assigned_space - nvl(free_space,0) - INCRM) / assigned_space)*100) "% Full"
+from(select  tablespace_name, count(*) num1, sum(DECODE(SIGN(maxbytes - bytes), -1, bytes, maxbytes))/(1024*1024) assigned_space, 
+sum(DECODE(SIGN(maxbytes - bytes), -1, bytes, maxbytes))/(1024*1024) - sum(bytes)/(1024*1024) INCRM from dba_data_files group by tablespace_name) A,
+(select  tablespace_name, count(*) num2, (sum(bytes)/(1024*1024)) free_space
+from dba_free_space a group by tablespace_name) B where b.tablespace_name(+)=a.tablespace_name and a.tablespace_name='UNDOTBS1'
+/
+
+
+User Creation:
+
+
+To check user status
+
+SQL> select * from dba_users where username like 'SAMSSRS%';
+
+no rows selected
+
+SQL>
+
+To check assign roles for the user
+
+SQL> SELECT *
+  FROM DBA_ROLE_PRIVS
+ WHERE GRANTEE = 'GRSLOAD';  2    3
+
+GRANTEE
+--------------------------------------------------------------------------------
+GRANTED_ROLE
+--------------------------------------------------------------------------------
+ADM DEL DEF COM
+--- --- --- ---
+GRSLOAD
+USER_FULL
+NO  NO  YES NO
+
+
+
+-- user creation
+
+SQL> create user SAMSSRSLOAD identified by SAMSSRSLOAD321#;
+
+User created.
+
+SQL> grant connect ,resource to SAMSSRSLOAD;
+
+Grant succeeded.
+
+SQL> alter user SAMSSRSLOAD default tablespace USERS;
+
+User altered.
+
+SQL> grant USER_FULL to SAMSSRSLOAD;
+
+Grant succeeded.
+
+SQL>
+
+SQL> select username,account_status,created,DEFAULT_TABLESPACE,TEMPORARY_TABLESPACE from dba_users where username='SAMSSRSLOAD';
+
+USERNAME
+--------------------------------------------------------------------------------
+ACCOUNT_STATUS                   CREATED   DEFAULT_TABLESPACE
+-------------------------------- --------- ------------------------------
+TEMPORARY_TABLESPACE
+------------------------------
+SAMSSRSLOAD
+OPEN                             02-APR-21 USERS
+TEMP
+
+
+--> to validate the connections
+
+SQL> conn SAMSSRSLOAD/SAMSSRSLOAD321#
+Connected.
+SQL>
+SQL>
+
+
+
+--- To check permisssion post granting the user role 
+
+
+SQL> conn SAMSSRSLOAD/SAMSSRSLOAD321#
+Connected.
+SQL> select count(1) from GRSLOAD.SRS_HIST_STG;
+select count(1) from GRSLOAD.SRS_HIST_STG
+                                      *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL>
+
+
+
+-- To Grant permission to role ( dynamic script)
+
+
+select 'grant select on '||owner||'.'||object_name||' to &role_name;' from dba_objects where owner='&owner'and (object_type='TABLE');
+
+
+Assign the roles again to user to refresh the permissions:
+
+SQL> grant USER_FULL to SAMSSRSLOAD;
+
+Grant succeeded.
+
+
+Wait event :
+
+@waits.sql — to check all the event
+@waiters.sql — pick the event details from waits.sql
+@set
+@locks
+@blocker
+
+
+/u/users/oracle/dba/sql/sqltrend.sql
+
+
+
+
+COLUMN username FORMAT A20 COLUMN event FORMAT A30 COLUMN wait_class FORMAT A15 SELECT NVL(b.username, '(oracle)') AS username, b.sid, b.serial#, a.event, a.wait_class, a.wait_time, a.seconds_in_wait, a.state FROM v$session_wait a, v$session b WHERE a.sid = 2798 ORDER BY a.seconds_in_wait DESC; 
+
+
+
+select sid, seq#, EVENT, WAIT_CLASS, SECONDS_IN_WAIT from v$session_wait where sid=2798 ORDER BY seconds_in_wait DESC;
+
+
